@@ -7,16 +7,16 @@ import json
 import matplotlib.pyplot as plt
 
 from .utility.define_class import INT_OR_FLOAT, LIST_OR_NUMPY, NEIGHBOUR_PACKING_TYPE
-from .image_processing import ImageProcessor as imgPro
+from .med_image.image_processing import ImageProcessor as imgPro
 from .utility.utillity import toStr
 
 
 def read_xlsx(
-    hifuType=1001,
-    recordFileName: str = "scan_record.json",
-    date=None,
-    scanPlan=None,
-    dataType=None,
+        hifuType=1001,
+        recordFileName: str = "scan_record.json",
+        date=None,
+        scanPlan=None,
+        dataType=None,
 ) -> tuple[np.ndarray, pd.arrays.PandasArray, pd.arrays.PandasArray, float, float]:
     hifuType = toStr(hifuType)
     date = toStr(date)
@@ -49,12 +49,12 @@ def read_xlsx(
 
 
 def findDbArea(
-    scanArray: np.ndarray, dbValue: float = -6
+        scanArray: np.ndarray, dbValue: float = -6
 ) -> tuple[np.ndarray, np.ndarray, float]:
     """
     :param scanArray
     :param dbValue: as the threshold for circle.
-    :return: circle in the shape of ellipse, with size, centerIj (center in image coordinate) and angle
+    :return: circle in the shape of ellipse, with size, centerIj (center in med_image coordinate) and angle
     """
     dbArray = 20 * np.log10(scanArray / np.max(scanArray))
     binaryDbArray = imgPro.binary(dbArray, dbValue, dtype=np.uint8)
@@ -73,7 +73,7 @@ def findDbArea(
     # ellipse = cv2.fitEllipse(hull)  # centerIj, size, angle
     # find a circle
     (x, y), radius = cv2.minEnclosingCircle(hull)
-    centerIj = np.array([x, y]).astype(int)  # (center in image coordinate)
+    centerIj = np.array([x, y]).astype(int)  # (center in med_image coordinate)
     mask = np.zeros(binaryDbArray.shape, dtype=np.uint8)
     # mask = cv2.drawContours(mask, [hull], -1, 255, cv2.FILLED)
     # cv2.ellipse(mask, ellipse, 255, thickness=cv2.FILLED)
@@ -102,10 +102,10 @@ def findDbArea(
 
 
 def singleCircleMask2D(
-    scanArray: np.ndarray,
-    modelRadius: INT_OR_FLOAT,
-    centerIj: LIST_OR_NUMPY,
-    spacings: LIST_OR_NUMPY,
+        scanArray: np.ndarray,
+        modelRadius: INT_OR_FLOAT,
+        centerIj: LIST_OR_NUMPY,
+        spacings: LIST_OR_NUMPY,
 ) -> np.ndarray:
     """
     :param scanArray
@@ -154,11 +154,11 @@ def integralXY(scanArray: np.ndarray, spacings: LIST_OR_NUMPY) -> float:
 
 
 def egoThermalIntegral(
-    scanArray: np.ndarray,
-    modelRadius: INT_OR_FLOAT,
-    centerIj: LIST_OR_NUMPY,
-    spacings: LIST_OR_NUMPY,
-    showFlag: bool = False,
+        scanArray: np.ndarray,
+        modelRadius: INT_OR_FLOAT,
+        centerIj: LIST_OR_NUMPY,
+        spacings: LIST_OR_NUMPY,
+        showFlag: bool = False,
 ) -> float:
     """
     create an ellipse mask at the centerIj of the model and sum that area.
@@ -188,10 +188,10 @@ def egoThermalIntegral(
 
 
 def packNeighbourLocation(
-    modelRadiusImage: float,
-    centerIj: LIST_OR_NUMPY,
-    nNeighbour: int,
-    packingType: NEIGHBOUR_PACKING_TYPE = "hexagonal",
+        modelRadiusImage: float,
+        centerIj: LIST_OR_NUMPY,
+        nNeighbour: int,
+        packingType: NEIGHBOUR_PACKING_TYPE = "hexagonal",
 ) -> np.ndarray:
     """
     Packing type can refer to https://en.wikipedia.org/wiki/Circle_packing
@@ -221,10 +221,10 @@ def packNeighbourLocation(
 
 
 def singleNeighbourThermalIntegral(
-    scanArray: np.ndarray,
-    modelRadius: INT_OR_FLOAT,
-    neighbourCenter: LIST_OR_NUMPY,
-    spacings: LIST_OR_NUMPY,
+        scanArray: np.ndarray,
+        modelRadius: INT_OR_FLOAT,
+        neighbourCenter: LIST_OR_NUMPY,
+        spacings: LIST_OR_NUMPY,
 ) -> np.ndarray:
     mask = singleCircleMask2D(scanArray, modelRadius, neighbourCenter, spacings)
     singleNeighbourScan = mask * scanArray
@@ -232,13 +232,13 @@ def singleNeighbourThermalIntegral(
 
 
 def neighbourThermalIntegral(
-    scanArray: np.ndarray,
-    modelRadius: INT_OR_FLOAT,
-    centerIj: LIST_OR_NUMPY,
-    spacings: LIST_OR_NUMPY,
-    nNeighbour: int,
-    packingType: NEIGHBOUR_PACKING_TYPE = "hexagonal",
-    showFlag: bool = False,
+        scanArray: np.ndarray,
+        modelRadius: INT_OR_FLOAT,
+        centerIj: LIST_OR_NUMPY,
+        spacings: LIST_OR_NUMPY,
+        nNeighbour: int,
+        packingType: NEIGHBOUR_PACKING_TYPE = "hexagonal",
+        showFlag: bool = False,
 ) -> tuple[float, float]:
     modelRadiusImage = modelRadius / spacings[0]
     neighbourLocs = packNeighbourLocation(

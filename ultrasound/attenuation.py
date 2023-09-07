@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from typing import Optional
 
 # from .rflib_math import findClosestNum, possibleFactor
-from lib.utility.define_class import AC_METHOD, INT_OR_FLOAT, INT_OR_NUMPY, STR_OR_PATH
+from .utility.define_class import AC_METHOD, INT_OR_FLOAT, INT_OR_NUMPY, STR_OR_PATH
 
 
 def calACValue(intensity: np.ndarray, method: AC_METHOD = "average") -> np.ndarray:

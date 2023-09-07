@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 from typing import Sequence, Optional, Union, List
 
-from lib.utility.define_class import STR_OR_PATH, STR_OR_LIST, PATH_OR_LIST, DIR_OR_FILE
+from .utility.define_class import STR_OR_PATH, STR_OR_LIST, PATH_OR_LIST, DIR_OR_FILE
 
 
 class FolderMgBase:
@@ -132,7 +132,7 @@ class FolderTagMg(FolderMgBase):
     """
 
     def __init__(
-        self, fullPath: STR_OR_PATH = Path(), tags: Optional[STR_OR_LIST] = None
+            self, fullPath: STR_OR_PATH = Path(), tags: Optional[STR_OR_LIST] = None
     ):
         if tags is None:
             tags = []

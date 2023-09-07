@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Optional
-from .pgm import PGMFile
+from .ultrasound.pgm import PGMFile
 from .utility.define_class import STR_OR_PATH
 
 
@@ -58,18 +58,18 @@ class CalibrationManager:
         # parameter setting
         self.lastUserParameters = None
         self.defaultParameters = {
-            "startDetectionCount": 2,
-            "phaseCheckStartCount": 3,
-            "baseLineUpdateFreq": 5,
+            "startDetectionCount"  : 2,
+            "phaseCheckStartCount" : 3,
+            "baseLineUpdateFreq"   : 5,
             "scanLineRowIndexStart": 200,
-            "scanLineRowIndexEnd": 500,
-            "scanLineThreshold": 100,
-            "hannWindowLength": 1024,
-            "fftLength": 1024,
-            "overLapLength": 896,
-            "hifuFreqMhz": 1.3,
-            "bbnIntervalDropLeft": 0.25,
-            "bbnIntervalDropRight": 0.25,
+            "scanLineRowIndexEnd"  : 500,
+            "scanLineThreshold"    : 100,
+            "hannWindowLength"     : 1024,
+            "fftLength"            : 1024,
+            "overLapLength"        : 896,
+            "hifuFreqMhz"          : 1.3,
+            "bbnIntervalDropLeft"  : 0.25,
+            "bbnIntervalDropRight" : 0.25,
         }
 
         self.reset(toDefault=True)
@@ -91,17 +91,17 @@ class CalibrationManager:
                 setattr(self, k, self.lastUserParameters[k])
 
     def changeSetting(
-        self,
-        baseLineUpdateFreq: Optional[int] = None,
-        scanLineRowIndexStart: Optional[int] = None,
-        scanLineRowIndexEnd: Optional[int] = None,
-        scanLineThreshold: Optional[float] = None,
-        hannWindowLength: Optional[int] = None,
-        fftLength: Optional[int] = None,
-        overLapLength: Optional[int] = None,
-        hifuFreqMhz: Optional[float] = None,
-        bbnIntervalDropLeft: Optional[float] = None,
-        bbnIntervalDropRight: Optional[float] = None,
+            self,
+            baseLineUpdateFreq: Optional[int] = None,
+            scanLineRowIndexStart: Optional[int] = None,
+            scanLineRowIndexEnd: Optional[int] = None,
+            scanLineThreshold: Optional[float] = None,
+            hannWindowLength: Optional[int] = None,
+            fftLength: Optional[int] = None,
+            overLapLength: Optional[int] = None,
+            hifuFreqMhz: Optional[float] = None,
+            bbnIntervalDropLeft: Optional[float] = None,
+            bbnIntervalDropRight: Optional[float] = None,
     ):
         localsItemsCopy = locals().copy()
         # assign
@@ -111,8 +111,8 @@ class CalibrationManager:
                     setattr(self, k, v)
                 else:
                     if (
-                        self.lastUserParameters is not None
-                        and k in self.lastUserParameters.keys()
+                            self.lastUserParameters is not None
+                            and k in self.lastUserParameters.keys()
                     ):
                         setattr(self, k, self.lastUserParameters[k])
                     else:
@@ -200,9 +200,9 @@ class CalibrationManager:
         if is None, calculate it
         """
         assert (
-            self.pgmFile is not None
-            and isinstance(self.pgmFile.rf, np.ndarray)
-            and isinstance(self.backgroundRfSect, np.ndarray)
+                self.pgmFile is not None
+                and isinstance(self.pgmFile.rf, np.ndarray)
+                and isinstance(self.backgroundRfSect, np.ndarray)
         )
         if self.pgmFile.isHifu is None:
             rfSection = self.pgmFile.rf[self.scanLineRowRange, :]
@@ -232,7 +232,7 @@ class CalibrationManager:
         """
         assert self.pgmFile is not None
         stftMagnitudeDbScanlineMeanDenoise = (
-            self.pgmFile.stftMagnitudeDbScanlineMean - self.baseLineMean
+                self.pgmFile.stftMagnitudeDbScanlineMean - self.baseLineMean
         )
         scanLineBbnIntervals = stftMagnitudeDbScanlineMeanDenoise[
             self._getHarmonicsIndexes()
@@ -242,10 +242,10 @@ class CalibrationManager:
 
     def _getHarmonicsIndexes(self) -> np.ndarray:
         assert (
-            self.pgmFile is not None
-            and self.pgmFile.fsMhz is not None
-            and self.hifuFreqMhz is not None
-            and isinstance(self.baseLineMean, np.ndarray)
+                self.pgmFile is not None
+                and self.pgmFile.fsMhz is not None
+                and self.hifuFreqMhz is not None
+                and isinstance(self.baseLineMean, np.ndarray)
         )
         if self.harmonicFreqSectionIndexes is None:
             scanFreq = self.pgmFile.fsMhz / 2

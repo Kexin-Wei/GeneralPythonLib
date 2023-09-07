@@ -9,7 +9,7 @@ class ImageProcessor:
 
     @staticmethod
     def binary(
-        image: np.ndarray, threshold: INT_OR_FLOAT = 0, dtype=None
+            image: np.ndarray, threshold: INT_OR_FLOAT = 0, dtype=None
     ) -> np.ndarray:
         binaryImage = image > threshold
         if dtype is not None:
@@ -18,12 +18,12 @@ class ImageProcessor:
 
     @staticmethod
     def removeIsolatedPoint(
-        image: np.ndarray, connectionType: FOUR_OR_EIGHT = "4-point-connected"
+            image: np.ndarray, connectionType: FOUR_OR_EIGHT = "4-point-connected"
     ) -> np.ndarray:
         """
         :param image: a numpy array
         :param connectionType: either "4-point-connected" or "4-point-connected"
-        :return: image without isolated points
+        :return: med_image without isolated points
         """
         if connectionType == "4-point-connected":
             kernel = np.array(
@@ -49,8 +49,8 @@ class ImageProcessor:
     @staticmethod
     def findBiggestConnectedComponent(image: np.ndarray) -> np.ndarray:
         """
-        :param image: binary image
-        :return: a binary image only with the biggest connect component
+        :param image: binary med_image
+        :return: a binary med_image only with the biggest connect component
         """
         nLabel, connectedComponents = cv2.connectedComponents(
             image, connectivity=4, ltype=cv2.CV_16U
@@ -59,7 +59,7 @@ class ImageProcessor:
         for i in np.arange(1, nLabel):
             sizeConnectedComponents.append(np.sum(connectedComponents == i))
         biggestComponent = connectedComponents == (
-            np.argmax(sizeConnectedComponents) + 1
+                np.argmax(sizeConnectedComponents) + 1
         )
         return biggestComponent.astype(np.uint8)
 

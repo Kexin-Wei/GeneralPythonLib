@@ -1,16 +1,16 @@
 import SimpleITK as sitk
 from pathlib import Path
 from typing import Sequence, Optional
-from lib.folder import BaseMedicalImageFolderMg
-from lib.utility.define_class import STR_OR_PATH
-from lib.medical_image import VolumeImage
+from .folder.folder import BaseMedicalImageFolderMg
+from .utility.define_class import STR_OR_PATH
+from .med_image.medical_image import VolumeImage
 
 
 class MedicalImageFolderMg(BaseMedicalImageFolderMg):
     """Add more dicom handling functions to BaseMedicalImageFolderMg
 
     Args:
-        BaseMedicalImageFolderMg: return images path given different image formats, currently supported
+        BaseMedicalImageFolderMg: return images path given different med_image formats, currently supported
             - Meta Image: *.mha, *.mhd
             - Nifti Image: *.nia, *.nii, *.nii.gz, *.hdr, *.img, *.img.gz
             - Nrrd Image: *.nrrd, *.nhdr

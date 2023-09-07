@@ -3,11 +3,11 @@ import numpy as np
 import SimpleITK as sitk
 from pathlib import Path
 from dataclasses import dataclass
-from lib.utility.define_class import STR_OR_PATH
+from .utility.define_class import STR_OR_PATH
 
 
 class VolumeImageInfo:
-    """Volume image information for fast and simple access
+    """Volume med_image information for fast and simple access
 
     Attributes:
         image (sitk.Image): sitk image

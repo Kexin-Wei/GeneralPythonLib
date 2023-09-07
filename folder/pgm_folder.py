@@ -3,9 +3,9 @@ import natsort
 
 from typing import Dict, Optional
 
-from lib.utility.define_class import STR_OR_PATH, STR_OR_LIST, PATH_OR_LIST
-from .pgm import PGMFile
-from .folder import FolderMgBase, FolderTagMg
+from .utility.define_class import STR_OR_PATH, STR_OR_LIST, PATH_OR_LIST
+from .ultrasound.pgm import PGMFile
+from .folder.folder import FolderMgBase, FolderTagMg
 
 
 class PgmFolder(FolderTagMg):
@@ -62,11 +62,11 @@ class PgmFolder(FolderTagMg):
         return PGMFile(self.getRandomFile(printOut=printOut), printOut=False)
 
     def saveBModes(
-        self,
-        imageRootFolderPath: Optional[STR_OR_PATH] = None,
-        upperDisplayRangeDb: Optional[int] = None,
-        lowerDisplayRangeDb: Optional[int] = None,
-        replace: bool = False,
+            self,
+            imageRootFolderPath: Optional[STR_OR_PATH] = None,
+            upperDisplayRangeDb: Optional[int] = None,
+            lowerDisplayRangeDb: Optional[int] = None,
+            replace: bool = False,
     ):
         assert isinstance(self.fullPath, Path)
         if imageRootFolderPath is None:
@@ -153,7 +153,7 @@ class PgmFolderTagMg(FolderMgBase):
                 self.tagGroup[t] = []  # create new list for new tag.value
             for pgmFmg in self.folderList.values():
                 if (
-                    f"_{t}" in pgmFmg.folderName
+                        f"_{t}" in pgmFmg.folderName
                 ):  # !!!HARDCODE:avoid find 7.5mhz using 5mhz
                     pgmFmg.addTags(t)
                     self.tagGroup[t].append(pgmFmg)

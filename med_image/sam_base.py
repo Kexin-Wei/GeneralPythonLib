@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from segment_anything import sam_model_registry, SamPredictor
-from lib.utility.define_class import STR_OR_PATH
+from .utility.define_class import STR_OR_PATH
 
 
 class BasicSAM:
@@ -42,16 +42,16 @@ class BasicSAM:
         return mask
 
     def predictOneImg(
-        self,
-        imageFile: Path,
-        figSavePath: STR_OR_PATH,
-        onlyFirstMask: bool = False,
+            self,
+            imageFile: Path,
+            figSavePath: STR_OR_PATH,
+            onlyFirstMask: bool = False,
     ):
         image = cv2.imread(str(imageFile))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         # plt.figure()
-        # plt.imshow(image)
+        # plt.imshow(med_image)
         # plt.axis('on')
         # plt.show()
         self.predictor.set_image(image)
@@ -61,7 +61,7 @@ class BasicSAM:
         input_label = np.array([1])
 
         # plt.figure()
-        # plt.imshow(image)
+        # plt.imshow(med_image)
         # show_points(input_point, input_label, plt.gca())
         # plt.axis('on')
         # plt.show()
@@ -77,8 +77,8 @@ class BasicSAM:
             plt.imshow(image)
             self.show_mask(mask, plt.gca())
             self.show_points(input_point, input_label, plt.gca())
-            plt.title(f"{imageFile.name}: Mask {i+1}, Score: {score:.3f}", fontsize=18)
-            plt.savefig(str(figSavePath) + f"_mask_{i+1}.png")
+            plt.title(f"{imageFile.name}: Mask {i + 1}, Score: {score:.3f}", fontsize=18)
+            plt.savefig(str(figSavePath) + f"_mask_{i + 1}.png")
             if onlyFirstMask:
                 break
         plt.close("all")
