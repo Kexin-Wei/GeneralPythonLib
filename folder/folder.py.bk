@@ -8,12 +8,7 @@ import numpy as np
 from pathlib import Path
 from typing import Sequence, Optional, Union, List
 
-from libs.utility.define_class import (
-    STR_OR_PATH,
-    STR_OR_LIST,
-    PATH_OR_LIST,
-    LsOptionType,
-)
+from .utility.define_class import STR_OR_PATH, STR_OR_LIST, PATH_OR_LIST, DIR_OR_FILE
 
 
 class FolderMgBase:
@@ -108,8 +103,8 @@ class FolderMg(FolderMgBase):
         self.folderName = self.fullPath.name
         self._getFilesDirs()
 
-    def ls(self, lsOption: Optional[LsOptionType] = None) -> None:
-        if lsOption == LsOptionType.dir or lsOption is None:
+    def ls(self, lsOption: Optional[DIR_OR_FILE] = None) -> None:
+        if lsOption == "dir" or lsOption is None:
             if self.dirs is None or len(self.dirs) == 0:
                 print(f"\nCurrent Folder '{self.folderName}' contains NO folders\n")
             else:
@@ -119,7 +114,7 @@ class FolderMg(FolderMgBase):
                 for d in self.dirs[:5]:
                     print(f"  - {d.name}")
                 print(f"  - ...")
-        if lsOption == LsOptionType.file or lsOption is None:
+        if lsOption == "file" or lsOption is None:
             if self.files is None or len(self.files) == 0:
                 print(f"\nCurrent Folder '{self.folderName}' contains NO files\n")
             else:
@@ -137,7 +132,7 @@ class FolderTagMg(FolderMgBase):
     """
 
     def __init__(
-        self, fullPath: STR_OR_PATH = Path(), tags: Optional[STR_OR_LIST] = None
+            self, fullPath: STR_OR_PATH = Path(), tags: Optional[STR_OR_LIST] = None
     ):
         if tags is None:
             tags = []
@@ -220,43 +215,3 @@ class T2FolderMg(FolderMg):
                         print(f)
             return t2List
         return []
-
-
-class URDFFolderMg(FolderMg):
-    """
-    Find all the urdf files for each robot
-    """
-
-    def __init__(self, folderFullPath: STR_OR_PATH = Path()):
-        super().__init__(folderFullPath)
-        self.urdfs = {}
-
-    def printURDFFiles(self):
-        for k, v in self.urdfs.items():
-            if isinstance(v, Path):
-                print(f"\nIn folder {k}, there is one urdf file:")
-                print(f"  - {v.name}")
-            else:
-                print(f"\nIn folder {k}, there are {len(v)} urdf files:")
-                for f in v:
-                    print(f"  - {f.name}")
-
-    def getURDFFromAllDir(self):
-        if self.nDirs:
-            for d in self.dirs:
-                urdfs = self.getURDF(d)
-                if len(urdfs):
-                    if len(urdfs) > 1:
-                        self.urdfs[d.name] = urdfs
-                    else:
-                        self.urdfs[d.name] = urdfs[0]
-
-    @staticmethod
-    def getURDF(dir):
-        urdfs = []
-        dirMg = FolderMg(dir)
-        if dirMg.nFile:
-            for f in dirMg.files:
-                if "urdf" in f.suffix.lower():
-                    urdfs.append(f)
-        return urdfs
