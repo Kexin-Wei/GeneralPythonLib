@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Optional
-from .ultrasound.pgm import PGMFile
-from .utility.define_class import STR_OR_PATH
+from ..ultrasound.pgm import PGMFile
+from ..utility.define_class import STR_OR_PATH
 
 
 class PgmType:

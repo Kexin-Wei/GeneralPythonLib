@@ -14,7 +14,7 @@ Read time and voltage data from oscilloscope data file written by the Janelle's 
 """
 import numpy as np
 
-from .utility.define_class import STR_OR_PATH
+from ..utility.define_class import STR_OR_PATH
 
 
 def skipLines(fID, nSkipLine: int) -> None:

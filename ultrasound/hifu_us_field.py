@@ -6,9 +6,9 @@ import json
 
 import matplotlib.pyplot as plt
 
-from .utility.define_class import INT_OR_FLOAT, LIST_OR_NUMPY, NEIGHBOUR_PACKING_TYPE
-from .med_image.image_processing import ImageProcessor as imgPro
-from .utility.utillity import toStr
+from ..utility.define_class import INT_OR_FLOAT, LIST_OR_NUMPY, NEIGHBOUR_PACKING_TYPE
+from ..med_image.image_processing import ImageProcessor as imgPro
+from ..utility.utillity import toStr
 
 
 def read_xlsx(

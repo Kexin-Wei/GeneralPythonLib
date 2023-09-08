@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple
-from libs.utility.define_class import JointType, Dimension
+from ..utility.define_class import JointType, Dimension
 
 LINK2D_PAIR = Tuple["Link2D", "Link2D"]
 
@@ -16,12 +16,12 @@ class DH:
     """
 
     def __init__(
-        self,
-        d: float,
-        theta: float,
-        a: float,
-        alpha: float,
-        calcType: Dimension = Dimension.three,
+            self,
+            d: float,
+            theta: float,
+            a: float,
+            alpha: float,
+            calcType: Dimension = Dimension.three,
     ):
         self.m = 0  # matrix
         self.d = d
@@ -94,13 +94,13 @@ class Link2D(DH):
     """
 
     def __init__(
-        self,
-        x: float,
-        y: float,
-        theta: float = 0,
-        l: float = 1,
-        label: str = "",
-        rad: bool = False,
+            self,
+            x: float,
+            y: float,
+            theta: float = 0,
+            l: float = 1,
+            label: str = "",
+            rad: bool = False,
     ):
         super().__init__(0, theta, l, 0, Dimension.two)
         self.x = x
@@ -165,14 +165,14 @@ class Joint2D(Link2D):
     """all joints must have a link attached to it"""
 
     def __init__(
-        self,
-        j_type: JointType,
-        x: float,
-        y: float,
-        theta: float = 0,
-        l: float = 1,
-        label: str = "",
-        rad: bool = False,
+            self,
+            j_type: JointType,
+            x: float,
+            y: float,
+            theta: float = 0,
+            l: float = 1,
+            label: str = "",
+            rad: bool = False,
     ):
         super().__init__(x, y, theta, l, label, rad)
         self.j_type = j_type
@@ -208,7 +208,7 @@ class Robot2D:
                     f"but the previous joint ended at ({prev_joint.link.end_x},{prev_joint.link.end_y})."
                 )
                 loc_error = (prev_joint.link.end_x - joint.link.x) ** 2 + (
-                    prev_joint.link.end_y - joint.link.y
+                        prev_joint.link.end_y - joint.link.y
                 ) ** 2
                 assert loc_error < 1e-6, f"{error_msg}"
 

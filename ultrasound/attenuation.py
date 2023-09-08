@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from typing import Optional
 
 # from .rflib_math import findClosestNum, possibleFactor
-from .utility.define_class import AC_METHOD, INT_OR_FLOAT, INT_OR_NUMPY, STR_OR_PATH
+from ..utility.define_class import AverageMethodType, INT_OR_FLOAT, INT_OR_NUMPY, STR_OR_PATH
 
 
-def calACValue(intensity: np.ndarray, method: AC_METHOD = "average") -> np.ndarray:
+def calACValue(intensity: np.ndarray, method: AverageMethodType = AverageMethodType.average) -> np.ndarray:
     """
     input: Intensity (dB)
     return ac value for each row, method to calculate
@@ -29,18 +29,18 @@ def blockPlaner(length: int, blockSize: int = 10) -> INT_OR_NUMPY:
         - REMARK: idx at the front is in minor priority
     """
     blockNum = int(np.floor(length / blockSize))
-    idx = np.arange(0, length)[-blockSize * blockNum :]
+    idx = np.arange(0, length)[-blockSize * blockNum:]
     return idx, blockNum
 
 
 def singleFreqAttenuationAssessment(
-    freq: INT_OR_FLOAT,
-    acDb: np.ndarray,
-    depth: INT_OR_FLOAT,
-    goalAttenuation: Optional[float] = None,
-    blockSize: int = 10,
-    showOrNot: bool = False,
-    figPathName: Optional[STR_OR_PATH] = None,
+        freq: INT_OR_FLOAT,
+        acDb: np.ndarray,
+        depth: INT_OR_FLOAT,
+        goalAttenuation: Optional[float] = None,
+        blockSize: int = 10,
+        showOrNot: bool = False,
+        figPathName: Optional[STR_OR_PATH] = None,
 ) -> np.ndarray:
     """
     determine the attenuation by block comparison
@@ -63,11 +63,11 @@ def singleFreqAttenuationAssessment(
     # computed element-wise divide
     # dB_0 - dB_depth = 10log10(I_0 / I_depth) = 20 * attenuation * freq * depth * log10(e)
     at = (
-        (acDbModified[0] - acDbModified)
-        / 20
-        / freq
-        / np.log10(np.e)
-        / np.linspace(1e-10, depth, num=acDbModified.shape[0])
+            (acDbModified[0] - acDbModified)
+            / 20
+            / freq
+            / np.log10(np.e)
+            / np.linspace(1e-10, depth, num=acDbModified.shape[0])
     )
 
     blockMed = np.mean(modifiedIdx.reshape(blockNum, -1), axis=1)
@@ -106,13 +106,13 @@ def singleFreqAttenuationAssessment(
 
 
 def multiFreqAttenuationAssessment(
-    freqs: list[float],
-    acDbs: list[np.ndarray],
-    depth: INT_OR_FLOAT,
-    goalAttenuation: Optional[float] = None,
-    blockSize: int = 10,
-    showOrNot: bool = False,
-    figPathName: Optional[STR_OR_PATH] = None,
+        freqs: list[float],
+        acDbs: list[np.ndarray],
+        depth: INT_OR_FLOAT,
+        goalAttenuation: Optional[float] = None,
+        blockSize: int = 10,
+        showOrNot: bool = False,
+        figPathName: Optional[STR_OR_PATH] = None,
 ) -> np.ndarray:
     """
     determine the attenuation by frequency comparison
@@ -135,11 +135,11 @@ def multiFreqAttenuationAssessment(
     deltaDbFreq0 = acDbModified0[0] - acDbModified0
     deltaDbFreq1 = acDbModified1[0] - acDbModified1
     at = (
-        (deltaDbFreq0 - deltaDbFreq1)
-        / 20
-        / (freqs[0] - freqs[1])
-        / np.log10(np.e)
-        / np.linspace(1e-10, depth, num=acDbModified1.shape[0])
+            (deltaDbFreq0 - deltaDbFreq1)
+            / 20
+            / (freqs[0] - freqs[1])
+            / np.log10(np.e)
+            / np.linspace(1e-10, depth, num=acDbModified1.shape[0])
     )
 
     blockMed = np.mean(modifiedIdx.reshape(blockNum, -1), axis=1)

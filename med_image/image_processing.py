@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from .utility.define_class import INT_OR_FLOAT, FOUR_OR_EIGHT
+from ..utility.define_class import INT_OR_FLOAT, TwoDConnectionType
 
 
 class ImageProcessor:
@@ -18,14 +18,14 @@ class ImageProcessor:
 
     @staticmethod
     def removeIsolatedPoint(
-            image: np.ndarray, connectionType: FOUR_OR_EIGHT = "4-point-connected"
+            image: np.ndarray, connectionType: TwoDConnectionType = TwoDConnectionType.four
     ) -> np.ndarray:
         """
         :param image: a numpy array
         :param connectionType: either "4-point-connected" or "4-point-connected"
         :return: med_image without isolated points
         """
-        if connectionType == "4-point-connected":
+        if connectionType == TwoDConnectionType.four:
             kernel = np.array(
                 [
                     0,

@@ -3,13 +3,6 @@ import numpy as np
 from typing import Union, Sequence, Tuple
 from enum import Enum
 
-# PURE_OR_APPEND = Literal["pure", "append"]
-# AC_METHOD = Literal["median", "average"]
-# DIR_OR_FILE = Literal["dir", "file"]
-# FOUR_OR_EIGHT = Literal["4-point-connected", "8-point-connected"]
-# NEIGHBOUR_PACKING_TYPE = Literal["hexagonal", "line"]
-# PROBE_OR_IMAGE = Literal["probe", "image"]
-
 
 class DatetimeChangingType(Enum):
     pure = "pure"

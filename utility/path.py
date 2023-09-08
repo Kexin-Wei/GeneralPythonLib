@@ -1,15 +1,15 @@
 import datetime
 from pathlib import Path
 
-from .define_class import PURE_OR_APPEND
+from .define_class import DatetimeChangingType
 
 
 def datetimeChangingFolder(parentPath: Path,
-                           mode: PURE_OR_APPEND = "pure") -> Path:
-    if mode == "pure":
+                           mode: DatetimeChangingType = DatetimeChangingType.pure) -> Path:
+    if mode == DatetimeChangingType.pure:
         return parentPath.joinpath(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
 
-    if mode == "append":
+    if mode == DatetimeChangingType.pure:
         return parentPath.joinpath(f"{parentPath.name}_"f"{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
 
     print(f"Mode {mode} not supported")

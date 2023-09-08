@@ -1,5 +1,15 @@
-from pathlib import Path
 from dataclasses import dataclass
+from typing import Union
+from enum import Enum
+
+
+class JointType(Enum):
+    fixed = "fixed"
+    revolute = "revolute"
+    continuous = "continuous"
+    prismatic = "prismatic"
+    floating = "floating"
+    planar = "planar"
 
 
 @dataclass
@@ -47,10 +57,13 @@ class Inertial:
     inertia: Inertia
 
 
+GEO_TYPE = Union[Box, Cylinder, Sphere, Mesh]
+
+
 @dataclass
 class Geometry:
     type: str
-    geo_type: Box | Cylinder | Sphere | Mesh
+    geo_type: GEO_TYPE
     geo_properties: dict
 
 
@@ -122,7 +135,7 @@ class SafetyController:
 class Joint:
     name: str
     type: str
-    type_list = ["fixed", "revolute", "continuous", "prismatic", "floating", "planar"]
+    type_list = JointType
     origin: Origin
     parent: str
     child: str

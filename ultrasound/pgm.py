@@ -45,7 +45,7 @@ from matplotlib.figure import Figure
 from scipy import ndimage, signal
 from typing import Optional, Sequence
 
-from .utility.define_class import STR_OR_PATH, INT_OR_FLOAT
+from ..utility.define_class import STR_OR_PATH, INT_OR_FLOAT
 
 
 class PGMFile:

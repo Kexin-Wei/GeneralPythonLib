@@ -1,6 +1,6 @@
 import pydicom
 import numpy as np
-from .utility.define_class import STR_OR_PATH, PROBE_OR_IMAGE
+from ..utility.define_class import STR_OR_PATH, PROBE_OR_IMAGE
 
 
 def readTransformMatrixFromDICOM(

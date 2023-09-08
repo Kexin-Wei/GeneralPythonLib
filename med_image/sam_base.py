@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from segment_anything import sam_model_registry, SamPredictor
-from .utility.define_class import STR_OR_PATH
+from ..utility.define_class import STR_OR_PATH
 
 
 class BasicSAM:

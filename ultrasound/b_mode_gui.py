@@ -8,7 +8,7 @@ from PySide6.QtCore import Slot, Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
 
-from .ultrasound.pgm import PGMFile
+from ..ultrasound.pgm import PGMFile
 
 
 class BModeWidget(QtWidgets.QWidget):

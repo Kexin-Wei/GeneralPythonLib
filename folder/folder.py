@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 from typing import Sequence, Optional, Union, List
 
-from libs.utility.define_class import (
+from ..utility.define_class import (
     STR_OR_PATH,
     STR_OR_LIST,
     PATH_OR_LIST,
@@ -252,9 +252,9 @@ class URDFFolderMg(FolderMg):
                         self.urdfs[d.name] = urdfs[0]
 
     @staticmethod
-    def getURDF(dir):
+    def getURDF(dirPath):
         urdfs = []
-        dirMg = FolderMg(dir)
+        dirMg = FolderMg(dirPath)
         if dirMg.nFile:
             for f in dirMg.files:
                 if "urdf" in f.suffix.lower():
