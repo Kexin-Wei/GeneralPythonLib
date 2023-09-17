@@ -396,7 +396,7 @@ class KinematicChain:
         node.add_parent(parent_name)
         node.add_child(child_name)
 
-    def get_node_child_to_end(self, node_name: str):
+    def get_node_child_to_end(self, node_name: str) -> list[str]:
         if not self._check_node_name_exist(node_name):
             warnings.warn(f"Node name {node_name} does not exist.")
             return None
@@ -421,6 +421,9 @@ class KinematicChain:
         if len(node_links) == 1:
             return node_links[0]
         return node_links
+
+    def get_structure(self):
+        return self.get_node_child_to_end(self.base_name)
 
 
 class Robot2D(KinematicChain):
