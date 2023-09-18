@@ -150,3 +150,19 @@ class Robot2D(KinematicChain):
                 joint.plot(ax, color=c)
         plt.show()
         return ax
+    
+    def _chain_forward(self, chain:list[str]):
+        T=np.eye(4)
+        for joint_name in chain:
+            joint=self.joint_name_map[joint_name]
+            T=T@joint.T
+
+    def forward(self):
+        if not self.parallel_joints:
+            ends = []
+            for chain in self.struct:
+                ends.append(self._chain_forward(chain))
+            return ends
+        else:
+            pass #TODO
+            
