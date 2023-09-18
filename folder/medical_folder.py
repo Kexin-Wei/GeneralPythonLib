@@ -1,7 +1,7 @@
 import SimpleITK as sitk
 from pathlib import Path
 from typing import Sequence, Optional
-from ..folder.folder import BaseMedicalImageFolderMg
+from .basic import BaseMedicalImageFolderMg
 from ..utility.define_class import STR_OR_PATH
 from ..med_image.medical_image import VolumeImage
 
