@@ -20,7 +20,6 @@ class DH:
         alpha: float,
         calcType: Dimension = Dimension.three,
     ):
-        self.m = None  # matrix
         self.d = d
         self.theta = theta
         self.a = a
@@ -32,24 +31,17 @@ class DH:
 
     @property
     def T(self):
-        return np.array(
-            [
-                [
-                    np.cos(self.theta),
-                    -np.sin(self.theta) * np.cos(self.alpha),
-                    np.sin(self.theta) * np.sin(self.alpha),
-                    self.a * np.cos(self.theta),
-                ],
-                [
-                    np.sin(self.theta),
-                    np.cos(self.theta) * np.cos(self.alpha),
-                    -np.cos(self.theta) * np.sin(self.alpha),
-                    self.a * np.sin(self.theta),
-                ],
-                [0, np.sin(self.alpha), np.cos(self.alpha), self.d],
-                [0, 0, 0, 1],
-            ]
-        )
+        c = np.cos(self.theta)
+        s = np.sin(self.theta)
+        ca = np.cos(self.alpha)
+        sa = np.sin(self.alpha)
+        row1 = [c, -s * ca, s * sa, self.a * c]
+        row2 = [s, c * ca, -c * sa, self.a * s]
+        row3 = [0, sa, ca, self.d]
+        row4 = [0, 0, 0, 1]
+        m = np.array([row1, row2, row3, row4])
+        assert m.shape == (4, 4)
+        return m
 
     def update_d(self, d):
         self.d = d
