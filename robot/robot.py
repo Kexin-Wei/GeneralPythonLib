@@ -158,7 +158,7 @@ class Robot2D(KinematicChain):
                 verticalalignment="center",
             )
 
-    def plot(self, ax: plt.Axes = None, show_fig:bool=True) -> plt.Axes:
+    def plot(self, ax: plt.Axes = None, show_fig: bool = True) -> plt.Axes:
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect("equal")
@@ -188,16 +188,22 @@ class Robot2D(KinematicChain):
                 ends.append(self.chain_forward(chain))
             return ends
         else:
-            pass  # TODO
+            pass  # TODO for parallel robot
+    
+    def inverse(self, end: np.ndarray):
+        assert end.shape == (3,), f"End point shape {end.shape} is not valid for inverse kinematics."
+        if not self.parallel_joints:
+            pass
+        else: #TODO for parallel robot
+            pass
 
     def sample_j_range(self, j_range: list, n_samples: int):
         j_range = np.array(j_range).swapaxes(0, 1)
         j_samples = np.linspace(j_range[0], j_range[1], n_samples)
         return j_samples
 
-    def workspace_per_chain(self, chain: list[str]):
+    def workspace_per_chain(self, chain: list[str], n_samples: int = 50):
         j_ranges = self.joint_range_per_chain(chain)
-        n_samples = 10
         j_samples = self.sample_j_range(j_ranges, n_samples)
         j_samples_stack = np.meshgrid(*j_samples.T)
         j_samples_stack = np.stack(j_samples_stack, axis=-1)
@@ -210,12 +216,12 @@ class Robot2D(KinematicChain):
                 ends.append(self.chain_forward(chain))
         return np.array(ends)
 
-    def workspace(self):
+    def workspace(self, n_samples: int = 50):
         ends_by_chain = []
         for chain in self.struct:
-            ends_by_chain.append(self.workspace_per_chain(chain))
+            ends_by_chain.append(self.workspace_per_chain(chain, n_samples=n_samples))
         return np.concatenate(ends_by_chain, axis=0)
-    
+
     def plot_workspace(self, ax: plt.Axes = None):
         ax = self.plot(ax, show_fig=False)
         ends_by_chain = self.workspace()
