@@ -6,7 +6,7 @@ Several folder Managers based on folderMeg, including:
 import natsort
 import numpy as np
 from pathlib import Path
-from typing import Sequence, Optional, Union, List
+from typing import Sequence, Optional, List
 
 from ..utility.define_class import (
     STR_OR_PATH,
@@ -160,66 +160,6 @@ class FolderTagMg(FolderMgBase):
         print(f"\nCurrent Folder '{self.folderName}' contains tags:")
         for t in self.tags:
             print(f"  - {t}")
-
-
-class BaseMedicalImageFolderMg(FolderMg):
-    """
-    return images path given different image formats, currently supported
-        - Meta Image: *.mha, *.mhd
-        - Nifti Image: *.nia, *.nii, *.nii.gz, *.hdr, *.img, *.img.gz
-        - Nrrd Image: *.nrrd, *.nhdr
-    """
-
-    def __init__(self, folderFullPath: STR_OR_PATH = Path()):
-        super().__init__(folderFullPath)
-
-    def getNrrdImagePath(self) -> List[Path]:
-        # *.nrrd, *.nhdr
-        return self._getFilePathByExtensionList(["nrrd", "nhdr"])
-
-    def getMetaImagePath(self) -> List[Path]:
-        # *.mha, *.mhd
-        return self._getFilePathByExtensionList(["mha", "mhd"])
-
-    def getNiftiImagePath(self) -> List[Path]:
-        # *.nia, *.nii, *.nii.gz, *.hdr, *.img, *.img.gz
-        return self._getFilePathByExtensionList(
-            ["nia", "nii", "nii.gz", "hdr", "img", "img.gz"]
-        )
-
-
-FOLDERMG_OR_PATH_OR_STR = Union[FolderMg, Path, str]
-
-
-class T2FolderMg(FolderMg):
-    """
-    Find certain file in a net-structure folder, which has multiple folders that contain their own folders inside them
-    """
-
-    def __init__(self, folderFullPath: STR_OR_PATH = Path()):
-        super().__init__(folderFullPath)
-        self.t2List = []
-
-    def getT2(self):
-        self.t2List.extend(self.searchT2inCurrentFolder())
-        if self.nDirs:
-            for d in self.dirs:
-                # print("\n--------------------------------------------")
-                # print(f"In folder {d}")
-                cMg = T2FolderMg(d)
-                cMg.getT2()
-                self.t2List.extend(cMg.t2List)
-
-    def searchT2inCurrentFolder(self):
-        if self.nFile:
-            t2List = []
-            for f in self.files:
-                if "t2" in f.name.lower() and ("mha" in f.suffix or "nrrd" in f.suffix):
-                    if "_cor" not in f.name.lower() and "_sag" not in f.name.lower():
-                        t2List.append(f)
-                        print(f)
-            return t2List
-        return []
 
 
 class URDFFolderMg(FolderMg):

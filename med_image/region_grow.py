@@ -3,6 +3,13 @@ import cv2 as cv
 from collections import deque
 from pathlib import Path
 from ..utility.define_class import TwoDConnectionType, STR_OR_PATH
+from enum import Enum
+
+
+class Similarity(Enum):
+    self_center = "seed it self"
+    region_mean = "region mean"
+    region_median = "region median"
 
 
 class RegionGrow:
@@ -21,6 +28,8 @@ class RegionGrow:
         self.c_m = None
         self.prompt_point = prompt_point
         self.init_seeds = deque()
+        self.similarity_standard = Similarity.region_median
+        self.standard = np.nan
 
         if self.connect_type == TwoDConnectionType.eight:
             self.c_m = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
@@ -33,7 +42,18 @@ class RegionGrow:
         self.normalize()
 
     def check_similarity(self, i_m: np.ndarray, threshold=5):
-        i_m_diff = np.abs(i_m - i_m[1][1])
+        if self.similarity_standard == Similarity.self_center:
+            self.standard = i_m[1, 1]
+        else:
+            masked_img = cv.bitwise_and(self.img, self.img, mask=self.seg_img)
+            if masked_img.sum() == 0:
+                self.standard = i_m[1, 1]
+            elif self.similarity_standard == Similarity.region_mean:
+                self.standard = masked_img[masked_img > 0].mean()
+            else:
+                # self.similarity_standard == Similarity.region_median:
+                self.standard = np.median(masked_img[masked_img > 0])
+        i_m_diff = np.abs(i_m - self.standard)
         where_condition = np.multiply(i_m_diff < threshold, self.c_m)
         valid_loc = np.argwhere(where_condition)
         valid_i_m = np.where(
@@ -65,7 +85,8 @@ class RegionGrow:
         iter = 0
         while seeds:
             iter += 1
-            print(f"iter {iter}")
+            if iter != 1:
+                print(f"iter {iter}, standard {self.standard:.2f}")
             if iter > 2e4:
                 print("too many iterations")
                 break
@@ -83,7 +104,7 @@ class RegionGrow:
                 if l in seeds or l in record:
                     continue
                 seeds.append(l)
-            self.seg_img[i-1:i+2, j-1:j+2] = seg_i_m
+            self.seg_img[i - 1 : i + 2, j - 1 : j + 2] = seg_i_m
         return self.seg_img
 
     def fill_hole(self):
