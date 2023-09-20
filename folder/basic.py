@@ -118,7 +118,8 @@ class FolderMg(FolderMgBase):
                 )
                 for d in self.dirs[:5]:
                     print(f"  - {d.name}")
-                print(f"  - ...")
+                if len(self.dirs) > 5:
+                    print(f"  - ...")
         if lsOption == LsOptionType.file or lsOption is None:
             if self.files is None or len(self.files) == 0:
                 print(f"\nCurrent Folder '{self.folderName}' contains NO files\n")
@@ -128,7 +129,8 @@ class FolderMg(FolderMgBase):
                 )
                 for f in self.files[:5]:
                     print(f"  - {f.name}")
-                print(f"  - ...")
+                if len(self.files) > 5:
+                    print(f"  - ...")
 
 
 class FolderTagMg(FolderMgBase):
