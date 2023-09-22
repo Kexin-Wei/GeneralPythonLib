@@ -49,8 +49,8 @@ class BiopsyPlanWithBox:
         window.AddRenderer(renderer)
         interactor = vtk.vtkRenderWindowInteractor()
         interactor.SetRenderWindow(window)
-        window.Render()
         window.SetSize(800, 800)
+        window.Render()
 
         window_to_img = vtk.vtkWindowToImageFilter()
         window_to_img.SetInput(window)
@@ -58,9 +58,9 @@ class BiopsyPlanWithBox:
         window_to_img.ReadFrontBufferOff()
         window_to_img.Update()
 
-        prefix = "ten_core_" if plan_method == CorePlanType.TEN else "twelve_core_"
+        prefix = "ten_core" if plan_method == CorePlanType.TEN else "twelve_core"
         png_file_name = self.result_path.joinpath(
-            f"{prefix}_core_{self.prostate_file.stem}.png"
+            f"{prefix}_{self.prostate_file.stem}.png"
         )
         png_writer = vtk.vtkPNGWriter()
         png_writer.SetFileName(png_file_name)
@@ -194,7 +194,65 @@ class BiopsyPlanWithBoundary:
         self.result_path = Path(result_path)
 
     def plan(self, plan_method: CorePlanType = CorePlanType.TWELVE):
-        pass
+        colors = vtk.vtkNamedColors()
+
+        prostate_reader = vtk.vtkSTLReader()
+        prostate_reader.SetFileName(str(self.prostate_file))
+        prostate_reader.Update()
+        
+        center_plane = vtk.vtkPlane()
+        center_plane.SetOrigin(prostate_reader.GetOutput().GetCenter())
+        center_plane.SetNormal(0, 0, 1)
+
+        cutter = vtk.vtkCutter()
+        cutter.SetInputConnection(prostate_reader.GetOutputPort())
+        cutter.SetCutFunction(center_plane)
+        cutter.GenerateValues(1, 0, 0)
+        
+        mapper_poly = vtk.vtkPolyDataMapper()
+        mapper_poly.SetInputData(prostate_reader.GetOutput())
+        actor_poly = vtk.vtkActor()
+        actor_poly.SetMapper(mapper_poly)
+        actor_poly.GetProperty().SetColor(colors.GetColor3d("Red"))
+        actor_poly.GetProperty().SetOpacity(0.5)
+
+        mapper_cutter = vtk.vtkPolyDataMapper()
+        mapper_cutter.SetInputConnection(cutter.GetOutputPort())
+        actor_cutter = vtk.vtkActor()
+        actor_cutter.SetMapper(mapper_cutter)
+        actor_cutter.GetProperty().SetColor(colors.GetColor3d("Green"))
+
+        # if plan_method == CorePlanType.TEN:
+            # core_points = self.ten_cores()
+        renderer = vtk.vtkRenderer()
+        renderer.AddActor(actor_poly)
+        renderer.AddActor(actor_cutter)
+
+        window = vtk.vtkRenderWindow()
+        window.AddRenderer(renderer)
+        interactor = vtk.vtkRenderWindowInteractor()
+        interactor.SetRenderWindow(window)
+        window.SetSize(800, 800)
+        window.Render()
+
+        window_to_img = vtk.vtkWindowToImageFilter()
+        window_to_img.SetInput(window)
+        window_to_img.SetInputBufferTypeToRGB()
+        window_to_img.ReadFrontBufferOff()
+        window_to_img.Update()
+
+        prefix = "ten_core" if plan_method == CorePlanType.TEN else "twelve_core"
+        png_file_name = self.result_path.joinpath(
+            f"{prefix}_{self.prostate_file.stem}.png"
+        )
+        png_writer = vtk.vtkPNGWriter()
+        png_writer.SetFileName(png_file_name)
+        png_writer.SetInputConnection(window_to_img.GetOutputPort())
+        png_writer.Write()
+
+        interactor.Initialize()
+        interactor.Start()
+
 
     def ten_cores():
         pass
