@@ -199,7 +199,7 @@ class BiopsyPlanWithBoundary:
         prostate_reader = vtk.vtkSTLReader()
         prostate_reader.SetFileName(str(self.prostate_file))
         prostate_reader.Update()
-        
+
         center_plane = vtk.vtkPlane()
         center_plane.SetOrigin(prostate_reader.GetOutput().GetCenter())
         center_plane.SetNormal(0, 0, 1)
@@ -208,7 +208,9 @@ class BiopsyPlanWithBoundary:
         cutter.SetInputConnection(prostate_reader.GetOutputPort())
         cutter.SetCutFunction(center_plane)
         cutter.GenerateValues(1, 0, 0)
-        
+
+        self.print_polydata_info(cutter.GetOutput())
+
         mapper_poly = vtk.vtkPolyDataMapper()
         mapper_poly.SetInputData(prostate_reader.GetOutput())
         actor_poly = vtk.vtkActor()
@@ -223,7 +225,7 @@ class BiopsyPlanWithBoundary:
         actor_cutter.GetProperty().SetColor(colors.GetColor3d("Green"))
 
         # if plan_method == CorePlanType.TEN:
-            # core_points = self.ten_cores()
+        # core_points = self.ten_cores()
         renderer = vtk.vtkRenderer()
         renderer.AddActor(actor_poly)
         renderer.AddActor(actor_cutter)
@@ -253,6 +255,15 @@ class BiopsyPlanWithBoundary:
         interactor.Initialize()
         interactor.Start()
 
+    @staticmethod
+    def print_polydata_info(polydata: vtk.vtkPolyData):
+        print(f"Number of points: {polydata.GetNumberOfPoints()}")
+        print(f"Number of lines: {polydata.GetNumberOfLines()}")
+        print(f"Number of polygons: {polydata.GetNumberOfPolys()}")
+        print(f"Number of cells: {polydata.GetNumberOfCells()}")
+        print(f"Number of vertices: {polydata.GetNumberOfVerts()}")
+        print(f"Number of strips: {polydata.GetNumberOfStrips()}")
+        print(f"Number of pieces: {polydata.GetNumberOfPieces()}")
 
     def ten_cores():
         pass
