@@ -6,7 +6,7 @@ from typing import Union
 from dataclasses import dataclass
 from ..utility.define_class import JointType
 from .joint import Joint2D
-from .kinematics import KinematicChain
+from .kinematic_chain import KinematicChain
 
 
 @dataclass

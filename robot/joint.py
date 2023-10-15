@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple
-from .kinematics import DH
+from .reference_frame import DH
 from ..utility.define_class import Dimension, JointType
 
 LINK2D_PAIR = Tuple["Link2D", "Link2D"]
