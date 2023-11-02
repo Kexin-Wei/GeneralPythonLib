@@ -19,17 +19,20 @@ class RegionGrow:
         prompt_point: tuple,
         threshold=5,
         connect_type: TwoDConnectionType = TwoDConnectionType.four,
+        seg_rf_file: str = None,
     ):
         self.img = None
         self.seg_img = None
         self.img_file = Path(img_file)
+        self.seg_rf_file = seg_rf_file
         self.connect_type = connect_type
         self.threshold = threshold
         self.c_m = None
+        assert len(prompt_point) == 2
         self.prompt_point = prompt_point
         self.init_seeds = deque()
         self.similarity_standard = Similarity.region_median
-        self.standard = np.nan
+        self.im_standard = np.nan
 
         if self.connect_type == TwoDConnectionType.eight:
             self.c_m = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
@@ -39,21 +42,24 @@ class RegionGrow:
         self.init_seeds.append(self.prompt_point)
 
         self.img = cv.imread(str(self.img_file), cv.IMREAD_GRAYSCALE)
+        if self.seg_rf_file is not None:
+            self.seg_rf_file = Path(seg_rf_file)
+            self.seg_rf_img = cv.imread(str(self.seg_rf_file), cv.IMREAD_GRAYSCALE)
         self.normalize()
 
     def check_similarity(self, i_m: np.ndarray, threshold=5):
         if self.similarity_standard == Similarity.self_center:
-            self.standard = i_m[1, 1]
+            self.im_standard = i_m[1, 1]
         else:
-            masked_img = cv.bitwise_and(self.img, self.img, mask=self.seg_img)
+            masked_img = cv.bitwise_and(self.img, self.img, mask=self.c_m)
             if masked_img.sum() == 0:
-                self.standard = i_m[1, 1]
+                self.im_standard = i_m[1, 1]
             elif self.similarity_standard == Similarity.region_mean:
-                self.standard = masked_img[masked_img > 0].mean()
+                self.im_standard = masked_img[masked_img > 0].mean()
             else:
                 # self.similarity_standard == Similarity.region_median:
-                self.standard = np.median(masked_img[masked_img > 0])
-        i_m_diff = np.abs(i_m - self.standard)
+                self.im_standard = np.median(masked_img[masked_img > 0])
+        i_m_diff = np.abs(i_m - self.im_standard)
         where_condition = np.multiply(i_m_diff < threshold, self.c_m)
         valid_loc = np.argwhere(where_condition)
         valid_i_m = np.where(
@@ -79,6 +85,15 @@ class RegionGrow:
         return seg_i_m, list(new_seeds_loc)
 
     def region_growing(self):
+        self.img = np.array(
+            [
+                [0, 1, 0],
+                [0, 1, 1],
+                [0, 1, 0],
+            ]
+        )
+        self.init_seeds = deque()
+        self.init_seeds.append((1, 1))
         seeds = self.init_seeds
         record = []
         self.seg_img = np.zeros_like(self.img)
@@ -86,7 +101,7 @@ class RegionGrow:
         while seeds:
             iter += 1
             if iter != 1:
-                print(f"iter {iter}, standard {self.standard:.2f}")
+                print(f"iter {iter}, standard {self.im_standard:.2f}")
             if iter > 2e4:
                 print("too many iterations")
                 break
@@ -129,11 +144,19 @@ class RegionGrow:
             cv.imshow("new_img", new_img)
             cv.waitKey(0)
             return
-        assert len(self.prompt_point) == 2
-        clr_img = cv.cvtColor(new_img, cv.COLOR_GRAY2BGR)
-        cv.circle(clr_img, self.prompt_point, 3, (255, 0, 0), -1)
+        self.show_prompt_point_in_image(new_img)
+
+    def show_prompt_point_in_image(self, img: np.array):
+        clr_img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
+        cv.circle(clr_img, self.prompt_point, 3, (0, 255, 0), -1)
         cv.imshow("new_img", clr_img)
         cv.waitKey(0)
+
+    def show_prompt_point_at_start(self):
+        if self.seg_rf_file is not None:
+            self.show_prompt_point_in_image(self.seg_rf_img)
+        else:
+            self.show_prompt_point_in_image(self.img)
 
     @staticmethod
     def location_matrx(i: int, j: int):
