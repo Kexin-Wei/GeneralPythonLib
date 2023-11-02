@@ -10,6 +10,7 @@ class Similarity(Enum):
     self_center = "seed it self"
     region_mean = "region mean"
     region_median = "region median"
+    origin = "origin"
 
 
 class RegionGrow:
@@ -19,6 +20,7 @@ class RegionGrow:
         prompt_point: tuple,
         threshold=5,
         connect_type: TwoDConnectionType = TwoDConnectionType.four,
+        similarity_standard: Similarity = Similarity.origin,
         seg_rf_file: str = None,
     ):
         self.img = None
@@ -28,47 +30,47 @@ class RegionGrow:
         self.connect_type = connect_type
         self.threshold = threshold
         self.c_m = None
-        assert len(prompt_point) == 2
-        self.prompt_point = prompt_point
+
         self.init_seeds = deque()
-        self.similarity_standard = Similarity.region_median
+        self.similarity_standard = similarity_standard
         self.im_standard = np.nan
 
         if self.connect_type == TwoDConnectionType.eight:
-            self.c_m = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+            self.c_m = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
         else:  # connect_type == TwoDConnectionType.four:
-            self.c_m = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])
-
-        self.init_seeds.append(self.prompt_point)
+            self.c_m = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
 
         self.img = cv.imread(str(self.img_file), cv.IMREAD_GRAYSCALE)
+        assert (
+            prompt_point[0] < self.img.shape[0]
+            and prompt_point[1] < self.img.shape[1]
+            and prompt_point[0] >= 0
+            and prompt_point[1] >= 0
+        ), "Prompt point is out of image"
+        assert len(prompt_point) == 2
+        self.prompt_point = prompt_point
+        self.init_seeds.append(self.prompt_point)
+
         if self.seg_rf_file is not None:
             self.seg_rf_file = Path(seg_rf_file)
             self.seg_rf_img = cv.imread(str(self.seg_rf_file), cv.IMREAD_GRAYSCALE)
         self.normalize()
 
-    def check_similarity(self, i_m: np.ndarray, threshold=5):
+    def check_similarity(self, i_m: np.ndarray):
+        masked_img = i_m * self.c_m
         if self.similarity_standard == Similarity.self_center:
             self.im_standard = i_m[1, 1]
+        elif self.similarity_standard == Similarity.region_mean:
+            self.im_standard = masked_img[masked_img > 0].mean()
+        elif self.similarity_standard == Similarity.origin:
+            self.im_standard = self.img[self.prompt_point[0], self.prompt_point[1]]
         else:
-            masked_img = i_m * self.c_m
-            if masked_img.sum() == 0:
-                self.im_standard = i_m[1, 1]
-            elif self.similarity_standard == Similarity.region_mean:
-                self.im_standard = masked_img[masked_img > 0].mean()
-            else:
-                # self.similarity_standard == Similarity.region_median:
-                self.im_standard = np.median(masked_img[masked_img > 0])
-        i_m_valid = np.abs(i_m - self.im_standard) < threshold
+            # self.similarity_standard == Similarity.region_median:
+            self.im_standard = np.median(masked_img[masked_img > 0])
+        i_m_valid = np.abs(i_m - self.im_standard) < self.threshold
         where_condition = np.multiply(i_m_valid, self.c_m)
         valid_loc = np.argwhere(where_condition)
-        valid_seg_i_m = np.where(
-            where_condition,
-            np.ones_like(i_m_valid) * 255,
-            np.zeros_like(i_m_valid),
-        )
-        valid_seg_i_m[1, 1] = 255
-        return valid_seg_i_m, valid_loc
+        return valid_loc
 
     def intensity_matrix(self, i: int, j: int):
         if i == 0 or j == 0 or i == self.img.shape[0] - 1 or j == self.img.shape[1] - 1:
@@ -80,10 +82,10 @@ class RegionGrow:
         i_m = self.intensity_matrix(i, j)
         if i_m is None:
             return None, None
-        seg_i_m, valid_loc = self.check_similarity(i_m)
+        valid_loc = self.check_similarity(i_m)
         l_m = self.location_matrx(i, j)
         new_seeds_loc = l_m[valid_loc.T[0], valid_loc.T[1]]
-        return seg_i_m, list(new_seeds_loc)
+        return list(new_seeds_loc)
 
     def region_growing(self):
         seeds = self.init_seeds
@@ -102,13 +104,16 @@ class RegionGrow:
                 assert self.im_standard != 0, f"error, {i,j}"
 
             if iter == 1:
-                print(f"iter {iter}, seed: ({i},{j})")
+                print(f"iter {iter}, seed: ({i},{j}), seeds len: {len(seeds)}")
             else:
-                print(f"iter {iter}, seed: ({i},{j}), standard {self.im_standard:.2f}")
+                print(
+                    f"iter {iter}, seed: ({i},{j}), seeds len: {len(seeds)}, standard {self.im_standard:.2f}"
+                )
             record.append((i, j))
+            self.seg_img[i, j] = 255
 
-            seg_i_m, new_seed_loc = self.get_new_seeds(i, j)
-            if seg_i_m is None or new_seed_loc is None:
+            new_seed_loc = self.get_new_seeds(i, j)
+            if new_seed_loc is None:
                 continue
 
             for l in new_seed_loc:
@@ -123,13 +128,13 @@ class RegionGrow:
                 ):
                     continue
                 seeds.append(l)
-            self.seg_img[i - 1 : i + 2, j - 1 : j + 2] = seg_i_m
+        self.seg_img = self.fill_hole(self.seg_img)
         return self.seg_img
 
-    def fill_hole(self):
+    def fill_hole(self, img):
         """fill hole in image"""
-        img = self.img.astype(np.uint8)
-        self.img = cv.morphologyEx(img, cv.MORPH_CLOSE, np.ones((3, 3), np.uint8))
+        img = img.astype(np.uint8)
+        return cv.morphologyEx(img, cv.MORPH_CLOSE, np.ones((3, 3), np.uint8))
 
     def normalize(self):
         """normalize image"""
@@ -143,7 +148,7 @@ class RegionGrow:
     def show_side_by_side(self):
         """show two images side by side"""
         masked_img1 = cv.bitwise_and(self.img, self.img, mask=self.seg_img)
-        new_img = np.concatenate((self.img, masked_img1), axis=1)
+        new_img = np.concatenate((self.img, masked_img1, self.seg_img), axis=1)
         if self.prompt_point is None:
             cv.imshow("new_img", new_img)
             cv.waitKey(0)
