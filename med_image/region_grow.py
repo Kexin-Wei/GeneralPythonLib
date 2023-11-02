@@ -51,7 +51,7 @@ class RegionGrow:
         if self.similarity_standard == Similarity.self_center:
             self.im_standard = i_m[1, 1]
         else:
-            masked_img = cv.bitwise_and(self.img, self.img, mask=self.c_m)
+            masked_img = i_m * self.c_m
             if masked_img.sum() == 0:
                 self.im_standard = i_m[1, 1]
             elif self.similarity_standard == Similarity.region_mean:
@@ -59,21 +59,22 @@ class RegionGrow:
             else:
                 # self.similarity_standard == Similarity.region_median:
                 self.im_standard = np.median(masked_img[masked_img > 0])
-        i_m_diff = np.abs(i_m - self.im_standard)
-        where_condition = np.multiply(i_m_diff < threshold, self.c_m)
+        i_m_valid = np.abs(i_m - self.im_standard) < threshold
+        where_condition = np.multiply(i_m_valid, self.c_m)
         valid_loc = np.argwhere(where_condition)
-        valid_i_m = np.where(
+        valid_seg_i_m = np.where(
             where_condition,
-            np.zeros_like(i_m_diff),
-            np.ones_like(i_m_diff) * 255,
+            np.ones_like(i_m_valid) * 255,
+            np.zeros_like(i_m_valid),
         )
-        return valid_i_m, valid_loc
+        valid_seg_i_m[1, 1] = 255
+        return valid_seg_i_m, valid_loc
 
     def intensity_matrix(self, i: int, j: int):
-        if i < 1 or j < 1 or i > self.img.shape[0] - 1 or j > self.img.shape[1] - 1:
-            print("intensity_matrix: out of bound")
+        if i == 0 or j == 0 or i == self.img.shape[0] - 1 or j == self.img.shape[1] - 1:
+            print(f"intensity_matrix at ({i},{j}) is out of bound")
             return None
-        return self.img[i - 1 : i + 2, j - 1 : j + 2]
+        return self.img[i - 1 : i + 2, j - 1 : j + 2].T
 
     def get_new_seeds(self, i: int, j: int):
         i_m = self.intensity_matrix(i, j)
@@ -85,29 +86,25 @@ class RegionGrow:
         return seg_i_m, list(new_seeds_loc)
 
     def region_growing(self):
-        self.img = np.array(
-            [
-                [0, 1, 0],
-                [0, 1, 1],
-                [0, 1, 0],
-            ]
-        )
-        self.init_seeds = deque()
-        self.init_seeds.append((1, 1))
         seeds = self.init_seeds
         record = []
         self.seg_img = np.zeros_like(self.img)
         iter = 0
         while seeds:
             iter += 1
-            if iter != 1:
-                print(f"iter {iter}, standard {self.im_standard:.2f}")
             if iter > 2e4:
                 print("too many iterations")
                 break
 
             p = seeds.popleft()
             i, j = p[0], p[1]
+            if iter > 1:
+                assert self.im_standard != 0, f"error, {i,j}"
+
+            if iter == 1:
+                print(f"iter {iter}, seed: ({i},{j})")
+            else:
+                print(f"iter {iter}, seed: ({i},{j}), standard {self.im_standard:.2f}")
             record.append((i, j))
 
             seg_i_m, new_seed_loc = self.get_new_seeds(i, j)
@@ -117,6 +114,13 @@ class RegionGrow:
             for l in new_seed_loc:
                 l = tuple(l)
                 if l in seeds or l in record:
+                    continue
+                if (
+                    l[0] == 0
+                    or l[1] == 0
+                    or l[0] == self.img.shape[0] - 1
+                    or l[1] == self.img.shape[1] - 1
+                ):
                     continue
                 seeds.append(l)
             self.seg_img[i - 1 : i + 2, j - 1 : j + 2] = seg_i_m
@@ -148,7 +152,9 @@ class RegionGrow:
 
     def show_prompt_point_in_image(self, img: np.array):
         clr_img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
-        cv.circle(clr_img, self.prompt_point, 3, (0, 255, 0), -1)
+        cv.circle(
+            clr_img, (self.prompt_point[1], self.prompt_point[0]), 3, (0, 255, 0), -1
+        )
         cv.imshow("new_img", clr_img)
         cv.waitKey(0)
 
