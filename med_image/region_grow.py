@@ -7,7 +7,6 @@ from enum import Enum
 
 
 class Similarity(Enum):
-    self_center = "seed it self"
     region_mean = "region mean"
     region_median = "region median"
     origin = "origin"
@@ -33,7 +32,7 @@ class RegionGrow:
 
         self.init_seeds = deque()
         self.similarity_standard = similarity_standard
-        self.im_standard = np.nan
+        self._im_standard = None
 
         if self.connect_type == TwoDConnectionType.eight:
             self.c_m = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
@@ -56,18 +55,26 @@ class RegionGrow:
             self.seg_rf_img = cv.imread(str(self.seg_rf_file), cv.IMREAD_GRAYSCALE)
         self.normalize()
 
-    def check_similarity(self, i_m: np.ndarray):
-        masked_img = i_m * self.c_m
-        if self.similarity_standard == Similarity.self_center:
-            self.im_standard = i_m[1, 1]
-        elif self.similarity_standard == Similarity.region_mean:
-            self.im_standard = masked_img[masked_img > 0].mean()
-        elif self.similarity_standard == Similarity.origin:
-            self.im_standard = self.img[self.prompt_point[0], self.prompt_point[1]]
-        else:
-            # self.similarity_standard == Similarity.region_median:
-            self.im_standard = np.median(masked_img[masked_img > 0])
-        i_m_valid = np.abs(i_m - self.im_standard) < self.threshold
+    @property
+    def im_standard(self):
+        if self._im_standard is None:
+            i = self.prompt_point[0]
+            j = self.prompt_point[1]
+            i_m = self.intensity_matrix(i, j)
+            masked_img = i_m * self.c_m
+            if self.similarity_standard == Similarity.origin:
+                self._im_standard = i_m[1, 1]
+            elif self.similarity_standard == Similarity.region_mean:
+                self._im_standard = masked_img[masked_img > 0].mean()
+            else:
+                # self.similarity_standard == Similarity.region_median:
+                self._im_standard = np.median(masked_img[masked_img > 0])
+        return self._im_standard
+
+    def check_similarity(self, i_m: cv.Mat):
+        i_m_float = i_m.astype(np.float32)
+        im_standard_float = self.im_standard.astype(np.float32)
+        i_m_valid = np.abs(i_m_float - im_standard_float) < self.threshold
         where_condition = np.multiply(i_m_valid, self.c_m)
         valid_loc = np.argwhere(where_condition)
         return valid_loc
@@ -101,13 +108,13 @@ class RegionGrow:
             p = seeds.popleft()
             i, j = p[0], p[1]
             if iter > 1:
-                assert self.im_standard != 0, f"error, {i,j}"
+                assert self._im_standard != 0, f"error, {i,j}"
 
             if iter == 1:
                 print(f"iter {iter}, seed: ({i},{j}), seeds len: {len(seeds)}")
             else:
                 print(
-                    f"iter {iter}, seed: ({i},{j}), seeds len: {len(seeds)}, standard {self.im_standard:.2f}"
+                    f"iter {iter}, seed: ({i},{j}), seeds len: {len(seeds)}, standard {self._im_standard:.2f}"
                 )
             record.append((i, j))
             self.seg_img[i, j] = 255
@@ -145,23 +152,29 @@ class RegionGrow:
         img = img * 255
         self.img = img.astype(np.uint8)
 
-    def show_side_by_side(self):
+    def show_side_by_side(self, save: bool = False, save_path: str = None):
         """show two images side by side"""
         masked_img1 = cv.bitwise_and(self.img, self.img, mask=self.seg_img)
         new_img = np.concatenate((self.img, masked_img1, self.seg_img), axis=1)
         if self.prompt_point is None:
             cv.imshow("new_img", new_img)
             cv.waitKey(0)
+            if save and save_path is not None:
+                cv.imwrite(str(save_path), new_img)
             return
-        self.show_prompt_point_in_image(new_img)
+        self.show_prompt_point_in_image(new_img, save=save, save_path=save_path)
 
-    def show_prompt_point_in_image(self, img: np.array):
+    def show_prompt_point_in_image(
+        self, img: np.array, save: bool = False, save_path: str = None
+    ):
         clr_img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
         cv.circle(
             clr_img, (self.prompt_point[1], self.prompt_point[0]), 3, (0, 255, 0), -1
         )
         cv.imshow("new_img", clr_img)
         cv.waitKey(0)
+        if save and save_path is not None:
+            cv.imwrite(str(save_path), clr_img)
 
     def show_prompt_point_at_start(self):
         if self.seg_rf_file is not None:
