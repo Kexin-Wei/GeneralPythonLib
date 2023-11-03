@@ -46,7 +46,7 @@ class PgmFolder(FolderTagMg):
     def readCurrentFile(self, printOut: bool = True) -> PGMFile:
         assert self.files is not None
         if self.currentFileIndex == 0 and printOut:
-            print(f"\nStart reading folder {self.fullPath}")
+            print(f"\nStart reading folder {self.full_path}")
         self.currentPgm = PGMFile(self.files[self.currentFileIndex], printOut=False)
         if printOut:
             print(
@@ -62,15 +62,15 @@ class PgmFolder(FolderTagMg):
         return PGMFile(self.getRandomFile(printOut=printOut), printOut=False)
 
     def saveBModes(
-            self,
-            imageRootFolderPath: Optional[STR_OR_PATH] = None,
-            upperDisplayRangeDb: Optional[int] = None,
-            lowerDisplayRangeDb: Optional[int] = None,
-            replace: bool = False,
+        self,
+        imageRootFolderPath: Optional[STR_OR_PATH] = None,
+        upperDisplayRangeDb: Optional[int] = None,
+        lowerDisplayRangeDb: Optional[int] = None,
+        replace: bool = False,
     ):
-        assert isinstance(self.fullPath, Path)
+        assert isinstance(self.full_path, Path)
         if imageRootFolderPath is None:
-            imageRootFolderPath = self.fullPath.parent
+            imageRootFolderPath = self.full_path.parent
         imageRootFolderPath = Path(imageRootFolderPath)
         imageFolderPath = imageRootFolderPath.joinpath(f"{self.folderName}_b-mode")
         assert self.files is not None
@@ -101,9 +101,9 @@ class ParentFolderTagMg(FolderTagMg):
         # remove all the folders, and refill with new ones
         folders = self._strToList(folders)
         self.dirs = []
-        assert isinstance(self.fullPath, Path)
+        assert isinstance(self.full_path, Path)
         for fd in folders:
-            fdPath = self.fullPath.joinpath(fd)
+            fdPath = self.full_path.joinpath(fd)
             if fdPath.exists():
                 self.dirs.append(fdPath)
             else:
@@ -153,7 +153,7 @@ class PgmFolderTagMg(FolderMgBase):
                 self.tagGroup[t] = []  # create new list for new tag.value
             for pgmFmg in self.folderList.values():
                 if (
-                        f"_{t}" in pgmFmg.folderName
+                    f"_{t}" in pgmFmg.folderName
                 ):  # !!!HARDCODE:avoid find 7.5mhz using 5mhz
                     pgmFmg.addTags(t)
                     self.tagGroup[t].append(pgmFmg)
@@ -194,7 +194,7 @@ class PgmFolderTagMg(FolderMgBase):
         if tag in self.tagGroup.keys():
             print(f'\nTag "{tag}" contains folders')
             for fp in self.tagGroup[tag]:
-                print(f"  - {fp.fullPath}")
+                print(f"  - {fp.full_path}")
         else:
             print(f"No such tag '{tag}' in the list of tags")
 

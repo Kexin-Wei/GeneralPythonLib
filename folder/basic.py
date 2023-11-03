@@ -28,7 +28,7 @@ class FolderMgBase:
     """
 
     def __init__(self):
-        self.fullPath: Optional[Path] = None
+        self.full_path: Optional[Path] = None
         self.parentFolder = None
         self.folderName = None
         self.tags = None
@@ -54,22 +54,22 @@ class FolderMgBase:
         return []
 
     def _getFilesDirs(self):
-        if self.fullPath is not None:
-            self.dirs = [p for p in self.fullPath.iterdir() if p.is_dir()]
-            self.files = [f for f in self.fullPath.iterdir() if f.is_file()]
+        if self.full_path is not None:
+            self.dirs = [p for p in self.full_path.iterdir() if p.is_dir()]
+            self.files = [f for f in self.full_path.iterdir() if f.is_file()]
             self.dirs = natsort.natsorted(self.dirs)
             self.files = natsort.natsorted(self.files)
 
     def _getFilePathByExtension(self, extension: str) -> List[Path]:
         # put extension in a pure string without . and *, e.g. python file input "py"
-        assert self.fullPath is not None
-        return natsort.natsorted(self.fullPath.glob(f"*.{extension}"))
+        assert self.full_path is not None
+        return natsort.natsorted(self.full_path.glob(f"*.{extension}"))
 
     def _getFilePathByExtensionList(self, extensions: list) -> List[Path]:
-        assert self.fullPath is not None
+        assert self.full_path is not None
         files = []
         for e in extensions:
-            files.extend(natsort.natsorted(self.fullPath.glob(f"*.{e}")))
+            files.extend(natsort.natsorted(self.full_path.glob(f"*.{e}")))
         return files
 
     def getRandomFile(self, printOut: bool = True) -> Path:
@@ -103,9 +103,9 @@ class FolderMg(FolderMgBase):
 
     def __init__(self, folderFullPath: STR_OR_PATH = Path()):
         super().__init__()
-        self.fullPath = Path(folderFullPath)
-        self.parentFolder = self.fullPath.parent
-        self.folderName = self.fullPath.name
+        self.full_path = Path(folderFullPath)
+        self.parentFolder = self.full_path.parent
+        self.folderName = self.full_path.name
         self._getFilesDirs()
 
     def ls(self, lsOption: Optional[LsOptionType] = None) -> None:
@@ -144,9 +144,9 @@ class FolderTagMg(FolderMgBase):
         if tags is None:
             tags = []
         super().__init__()
-        self.fullPath = Path(fullPath)
-        self.parentFolder = self.fullPath.parent
-        self.folderName = self.fullPath.name
+        self.full_path = Path(fullPath)
+        self.parentFolder = self.full_path.parent
+        self.folderName = self.full_path.name
         self._getFilesDirs()
         self.tags = set(self._strToList(tags))
 
