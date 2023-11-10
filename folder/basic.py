@@ -28,12 +28,12 @@ class FolderMgBase:
     """
 
     def __init__(self):
-        self.full_path: Optional[Path] = None
+        self.full_path: Path = None
         self.parentFolder = None
         self.folderName = None
         self.tags = None
-        self.dirs: Optional[Sequence[Path]] = None
-        self.files: Optional[Sequence[Path]] = None
+        self.dirs: Sequence[Path] = None
+        self.files: Sequence[Path] = None
 
     @staticmethod
     def _strToList(anyStr: STR_OR_LIST) -> list:
