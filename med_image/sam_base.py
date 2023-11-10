@@ -14,7 +14,7 @@ class BasicSAM:
             self.sam_checkpoint = "../sam_vit_b_01ec64.pth"
         elif model_type == "vit_l":
             self.sam_checkpoint = "../sam_vit_l_0b3195.pth"
-        elif model_type == 'medsam_vit_b':
+        elif model_type == "medsam_vit_b":
             model_type = "vit_b"
             self.sam_checkpoint = "../medsam_vit_b.pth"
         else:
@@ -42,10 +42,11 @@ class BasicSAM:
         return mask
 
     def predictOneImg(
-            self,
-            imageFile: Path,
-            figSavePath: STR_OR_PATH,
-            onlyFirstMask: bool = False,
+        self,
+        imageFile: Path,
+        figSavePath: STR_OR_PATH,
+        input_point: np.ndarray = None,
+        onlyFirstMask: bool = False,
     ):
         image = cv2.imread(str(imageFile))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -56,8 +57,12 @@ class BasicSAM:
         # plt.show()
         self.predictor.set_image(image)
 
-        center_point = np.array(image.shape) / 2
-        input_point = np.array([[center_point[0], center_point[1]]], dtype=int)
+        if input_point is None:
+            center_point = np.array(image.shape) / 2
+            input_point = np.array([[center_point[0], center_point[1]]], dtype=int)
+        else:
+            assert len(input_point) == 2, "input_point must have 2 elements"
+            input_point = np.array([[input_point[0], input_point[1]]], dtype=int)
         input_label = np.array([1])
 
         # plt.figure()
@@ -77,7 +82,9 @@ class BasicSAM:
             plt.imshow(image)
             self.show_mask(mask, plt.gca())
             self.show_points(input_point, input_label, plt.gca())
-            plt.title(f"{imageFile.name}: Mask {i + 1}, Score: {score:.3f}", fontsize=18)
+            plt.title(
+                f"{imageFile.name}: Mask {i + 1}, Score: {score:.3f}", fontsize=18
+            )
             plt.savefig(str(figSavePath) + f"_mask_{i + 1}.png")
             if onlyFirstMask:
                 break

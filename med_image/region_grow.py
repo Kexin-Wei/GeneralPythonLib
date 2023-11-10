@@ -152,36 +152,6 @@ class RegionGrow:
         img = img * 255
         self.img = img.astype(np.uint8)
 
-    def show_side_by_side(self, save: bool = False, save_path: str = None):
-        """show two images side by side"""
-        masked_img1 = cv.bitwise_and(self.img, self.img, mask=self.seg_img)
-        new_img = np.concatenate((self.img, masked_img1, self.seg_img), axis=1)
-        if self.prompt_point is None:
-            cv.imshow("new_img", new_img)
-            cv.waitKey(0)
-            if save and save_path is not None:
-                cv.imwrite(str(save_path), new_img)
-            return
-        self.show_prompt_point_in_image(new_img, save=save, save_path=save_path)
-
-    def show_prompt_point_in_image(
-        self, img: np.array, save: bool = False, save_path: str = None
-    ):
-        clr_img = cv.cvtColor(img, cv.COLOR_GRAY2BGR)
-        cv.circle(
-            clr_img, (self.prompt_point[1], self.prompt_point[0]), 3, (0, 255, 0), -1
-        )
-        cv.imshow("new_img", clr_img)
-        cv.waitKey(0)
-        if save and save_path is not None:
-            cv.imwrite(str(save_path), clr_img)
-
-    def show_prompt_point_at_start(self):
-        if self.seg_rf_file is not None:
-            self.show_prompt_point_in_image(self.seg_rf_img)
-        else:
-            self.show_prompt_point_in_image(self.img)
-
     @staticmethod
     def location_matrx(i: int, j: int):
         x_m = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]) + i
