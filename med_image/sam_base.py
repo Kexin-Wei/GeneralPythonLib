@@ -45,6 +45,7 @@ class BasicSAM:
         self,
         imageFile: Path,
         figSavePath: STR_OR_PATH,
+        input_point: np.ndarray = None,
         onlyFirstMask: bool = False,
     ):
         image = cv2.imread(str(imageFile))
@@ -56,8 +57,12 @@ class BasicSAM:
         # plt.show()
         self.predictor.set_image(image)
 
-        center_point = np.array(image.shape) / 2
-        input_point = np.array([[center_point[0], center_point[1]]], dtype=int)
+        if input_point is None:
+            center_point = np.array(image.shape) / 2
+            input_point = np.array([[center_point[0], center_point[1]]], dtype=int)
+        else:
+            assert len(input_point) == 2, "input_point must have 2 elements"
+            input_point = np.array([[input_point[0], input_point[1]]], dtype=int)
         input_label = np.array([1])
 
         # plt.figure()
