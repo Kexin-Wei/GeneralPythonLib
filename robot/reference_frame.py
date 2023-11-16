@@ -21,7 +21,6 @@ class DH:
         alpha: float,
         calcType: Dimension = Dimension.three,
     ):
-        self.m = None  # matrix
         self.d = d
         self.theta = theta
         self.a = a
