@@ -253,6 +253,15 @@ class DualQuaternion:
         q = Quaternion.from_euler(theta, n)
         return DualQuaternion.from_quaternion_vector(q, v)
 
+    def displace(self, rYX_X: "DualQuaternion") -> "DualQuaternion":
+        """displace a dual quaternion rYX_X by dqYX to get rYX_Y
+        Args:
+            rYX_X (DualQuaternion): dual quaternion of rYX_X
+        
+        Returns:
+            DualQuaternion: rYX_Y
+        """
+        return self.conjugate() * rYX_X * self
 
 if __name__ == "__main__":
     a = Quaternion(np.array([1, 2, 3, 4]))

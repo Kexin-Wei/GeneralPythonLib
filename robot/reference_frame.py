@@ -139,9 +139,9 @@ class Node:
         self.child.remove(child_name)
 
 
-class ReferenceFrame(Node):
+class DualQuaternionReferenceFrame:
     """
-    define a Reference Frame Y respect to frame X (parent)
+    define a Reference Frame Y respect to frame X (parent) using dual quaternion
     Member:
         r: displacement, rYX_Y
         w: angular velocity
@@ -158,18 +158,18 @@ class ReferenceFrame(Node):
         displacement: np.ndarray,
         linear_velocity: np.ndarray,
         angular_velocity: np.ndarray,
+        linear_acceleration: np.ndarray,
+        angular_acceleration: np.ndarray,
         rotation: Quaternion,
-        node_name: str,
-        parent_name: str,
-        child_name: str = None,
     ) -> None:
-        super().__init__(node_name, parent_name, child_name)
         assert displacement.shape == (3,), "Displacement must be a 3D vector."
         assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
         assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."
         self.r: Quaternion = self.add_as_pure_quaternion(displacement)
         self.v: Quaternion = self.add_as_pure_quaternion(linear_velocity)
         self.w: Quaternion = self.add_as_pure_quaternion(angular_velocity)
+        self.a: Quaternion = self.add_as_pure_quaternion(linear_acceleration)
+        self.alpha: Quaternion = self.add_as_pure_quaternion(angular_acceleration)
         self.q: Quaternion = rotation
 
         self.dq: DualQuaternion = DualQuaternion.from_quaternion_vector(
@@ -182,3 +182,45 @@ class ReferenceFrame(Node):
     def add_as_pure_quaternion(self, vec: np.ndarray) -> Quaternion:
         assert vec.shape == (3,), "Vector must be a 3D vector."
         return Quaternion(np.hstack([0, vec]))
+
+    def swap(self) -> "DualQuaternionReferenceFrame":
+        new_r = self.q.rotate(self.r)
+        new_v = self.q.rotate(self.v)
+        new_w = self.q.rotate(self.w)
+        new_a = self.q.rotate(self.a)
+        new_alpha = self.q.rotate(self.alpha)
+
+        new_wdq = self.dq.displace(self.wdq)
+        new_rdq = self.dq.displace(self.rdq)
+        new_dq = self.dq.conjugate()
+        new_q = self.q.conjugate()
+
+        return DualQuaternionReferenceFrame(
+            new_r, new_v, new_w, new_a, new_alpha, new_q
+        )
+
+    def update(
+        self,
+        displacement: np.ndarray,
+        linear_velocity: np.ndarray,
+        angular_velocity: np.ndarray,
+        linear_acceleration: np.ndarray,
+        angular_acceleration: np.ndarray,
+        rotation: Quaternion,
+    ):
+        assert displacement.shape == (3,), "Displacement must be a 3D vector."
+        assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
+        assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."
+        self.r: Quaternion = self.add_as_pure_quaternion(displacement)
+        self.v: Quaternion = self.add_as_pure_quaternion(linear_velocity)
+        self.w: Quaternion = self.add_as_pure_quaternion(angular_velocity)
+        self.a: Quaternion = self.add_as_pure_quaternion(linear_acceleration)
+        self.alpha: Quaternion = self.add_as_pure_quaternion(angular_acceleration)
+        self.q: Quaternion = rotation
+
+        self.dq: DualQuaternion = DualQuaternion.from_quaternion_vector(
+            self.q, self.r.vec
+        )
+        self.rdq: DualQuaternion = DualQuaternion.as_pure_real(self.r.vec)
+        wdq_d = self.v + self.r.cross(self.w)
+        self.wdq: DualQuaternion = DualQuaternion.from_real_dual(self.w, wdq_d)
