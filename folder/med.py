@@ -2,8 +2,9 @@ import SimpleITK as sitk
 from pathlib import Path
 from typing import Sequence, Optional, List, Union
 from .basic import FolderMg
-from ..utility.define_class import STR_OR_PATH
+from ..utils.define_class import STR_OR_PATH
 from ..med_image.medical_image import VolumeImage
+
 
 class BaseMedicalImageFolderMg(FolderMg):
     """
@@ -63,7 +64,8 @@ class T2FolderMg(FolderMg):
                         print(f)
             return t2List
         return []
-    
+
+
 class MedicalImageFolderMg(BaseMedicalImageFolderMg):
     """Add more dicom handling functions to BaseMedicalImageFolderMg
 

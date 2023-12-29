@@ -8,7 +8,7 @@ import numpy as np
 
 from .joint import Joint2D
 from .kinematics import KinematicChain
-from ..utility.define_class import JointType
+from ..utils.define_class import JointType
 
 
 @dataclass
@@ -189,12 +189,14 @@ class Robot2D(KinematicChain):
             return ends
         else:
             pass  # TODO for parallel robot
-    
+
     def inverse(self, end: np.ndarray):
-        assert end.shape == (3,), f"End point shape {end.shape} is not valid for inverse kinematics."
+        assert end.shape == (
+            3,
+        ), f"End point shape {end.shape} is not valid for inverse kinematics."
         if not self.parallel_joints:
             pass
-        else: #TODO for parallel robot
+        else:  # TODO for parallel robot
             pass
 
     def sample_j_range(self, j_range: list, n_samples: int):

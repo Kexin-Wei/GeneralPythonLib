@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from segment_anything import sam_model_registry, SamPredictor
-from ..utility.define_class import STR_OR_PATH
+from ..utils.define_class import STR_OR_PATH
 
 
 class BasicSAM:
@@ -14,7 +14,7 @@ class BasicSAM:
             self.sam_checkpoint = "../sam_vit_b_01ec64.pth"
         elif model_type == "vit_l":
             self.sam_checkpoint = "../sam_vit_l_0b3195.pth"
-        elif model_type == 'medsam_vit_b':
+        elif model_type == "medsam_vit_b":
             model_type = "vit_b"
             self.sam_checkpoint = "../medsam_vit_b.pth"
         else:
@@ -42,10 +42,10 @@ class BasicSAM:
         return mask
 
     def predictOneImg(
-            self,
-            imageFile: Path,
-            figSavePath: STR_OR_PATH,
-            onlyFirstMask: bool = False,
+        self,
+        imageFile: Path,
+        figSavePath: STR_OR_PATH,
+        onlyFirstMask: bool = False,
     ):
         image = cv2.imread(str(imageFile))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -77,7 +77,9 @@ class BasicSAM:
             plt.imshow(image)
             self.show_mask(mask, plt.gca())
             self.show_points(input_point, input_label, plt.gca())
-            plt.title(f"{imageFile.name}: Mask {i + 1}, Score: {score:.3f}", fontsize=18)
+            plt.title(
+                f"{imageFile.name}: Mask {i + 1}, Score: {score:.3f}", fontsize=18
+            )
             plt.savefig(str(figSavePath) + f"_mask_{i + 1}.png")
             if onlyFirstMask:
                 break

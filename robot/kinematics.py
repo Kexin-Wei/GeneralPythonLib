@@ -1,6 +1,6 @@
 import warnings
 import numpy as np
-from ..utility.define_class import Dimension
+from ..utils.define_class import Dimension
 
 
 class DH:

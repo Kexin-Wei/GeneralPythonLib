@@ -3,7 +3,7 @@ import numpy as np
 import SimpleITK as sitk
 from pathlib import Path
 from dataclasses import dataclass
-from ..utility.define_class import STR_OR_PATH
+from ..utils.define_class import STR_OR_PATH
 
 
 class VolumeImageInfo:

@@ -8,7 +8,7 @@ import numpy as np
 from pathlib import Path
 from typing import Sequence, Optional, List
 
-from ..utility.define_class import (
+from ..utils.define_class import (
     STR_OR_PATH,
     STR_OR_LIST,
     PATH_OR_LIST,
