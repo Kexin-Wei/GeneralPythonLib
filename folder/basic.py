@@ -3,6 +3,7 @@ Several folder Managers based on folderMeg, including:
     - pgmFolderMg: manage the pgm files inside the folder
     - parentFolderMg: manage the child directories inside the folder
 """
+
 import natsort
 import numpy as np
 from pathlib import Path
@@ -131,6 +132,17 @@ class FolderMg(FolderMgBase):
                     print(f"  - {f.name}")
                 if len(self.files) > 5:
                     print(f"  - ...")
+
+    def get_file_group_by_extension(self) -> dict:
+        fileGroup = {}
+        if self.files is not None:
+            for f in self.files:
+                extension = f.suffix.lower()
+                if extension in fileGroup:
+                    fileGroup[extension].append(f)
+                else:
+                    fileGroup[extension] = [f]
+        return fileGroup
 
 
 class FolderTagMg(FolderMgBase):
