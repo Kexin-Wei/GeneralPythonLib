@@ -59,7 +59,7 @@ class PgmFolder(FolderTagMg):
         return self.readCurrentFile()
 
     def readRandomPgm(self, printOut: bool = True) -> PGMFile:
-        return PGMFile(self.getRandomFile(printOut=printOut), printOut=False)
+        return PGMFile(self.get_random_file(printOut=printOut), printOut=False)
 
     def saveBModes(
         self,
@@ -99,7 +99,7 @@ class ParentFolderTagMg(FolderTagMg):
 
     def createNewFolderList(self, folders: STR_OR_LIST):
         # remove all the folders, and refill with new ones
-        folders = self._strToList(folders)
+        folders = self._str_to_list(folders)
         self.dirs = []
         assert isinstance(self.full_path, Path)
         for fd in folders:
@@ -139,7 +139,7 @@ class PgmFolderTagMg(FolderMgBase):
             Path, PgmFolder
         ] = dict()  # key = path, value = store the folderMgBase type of folders
         self.tagGroup: Dict[str, list[PgmFolder]] = dict()
-        folders = self._pathToList(folders)
+        folders = self._path_to_list(folders)
         for fd in folders:
             self.folderList[fd] = PgmFolder(fd)
 
@@ -147,7 +147,7 @@ class PgmFolderTagMg(FolderMgBase):
         """
         only for the folders in the self.folderList
         """
-        tags = self._strToList(tags)
+        tags = self._str_to_list(tags)
         for t in tags:
             if t not in self.tagGroup.keys():
                 self.tagGroup[t] = []  # create new list for new tag.value
@@ -155,12 +155,12 @@ class PgmFolderTagMg(FolderMgBase):
                 if (
                     f"_{t}" in pgmFmg.folderName
                 ):  # !!!HARDCODE:avoid find 7.5mhz using 5mhz
-                    pgmFmg.addTags(t)
+                    pgmFmg.add_tags(t)
                     self.tagGroup[t].append(pgmFmg)
 
     def addGroup(self, folders: PATH_OR_LIST, tags: STR_OR_LIST) -> None:
-        tags = self._strToList(tags)
-        folders = self._pathToList(folders)
+        tags = self._str_to_list(tags)
+        folders = self._path_to_list(folders)
 
         for t in tags:
             if t not in self.tagGroup.keys():
@@ -169,12 +169,12 @@ class PgmFolderTagMg(FolderMgBase):
         for fd in folders:
             if fd not in self.folderList.keys():
                 self.folderList[fd] = PgmFolder(fd)  # only create once
-            self.folderList[fd].addTags(tags)
+            self.folderList[fd].add_tags(tags)
             for t in tags:
                 self.tagGroup[t].append(PgmFolder(fd))
 
     def findByTags(self, tags: STR_OR_LIST) -> list[PgmFolder]:
-        tags = self._strToList(tags)
+        tags = self._str_to_list(tags)
         if len(tags) == 1:
             if tags[0] in self.tagGroup.keys():
                 return self.tagGroup[tags[0]]
