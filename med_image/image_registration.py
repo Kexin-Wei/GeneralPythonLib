@@ -1,10 +1,10 @@
 import pydicom
 import numpy as np
-from ..utility.define_class import STR_OR_PATH, PROBE_OR_IMAGE
+from ..utils.define_class import STR_OR_PATH, PROBE_OR_IMAGE
 
 
 def readTransformMatrixFromDICOM(
-        file: STR_OR_PATH, readType: PROBE_OR_IMAGE
+    file: STR_OR_PATH, readType: PROBE_OR_IMAGE
 ) -> np.ndarray:
     ds = pydicom.dcmread(file)
     if readType == "probe":
@@ -21,7 +21,7 @@ def readTransformMatrixFromDICOM(
 
 
 def getTransformMatrixFromFixedMoving(
-        fixedImagePath: STR_OR_PATH, movingImagePath: STR_OR_PATH, readType: PROBE_OR_IMAGE
+    fixedImagePath: STR_OR_PATH, movingImagePath: STR_OR_PATH, readType: PROBE_OR_IMAGE
 ) -> np.ndarray:
     """
     :param fixedImagePath:

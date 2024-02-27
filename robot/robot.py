@@ -1,10 +1,11 @@
 # numerical functions for robot kinematics
 # using dh table
-import numpy as np
-import matplotlib.pyplot as plt
-from typing import Union
 from dataclasses import dataclass
-from ..utility.define_class import JointType
+from typing import Union
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 from .joint import Joint2D
 from .kinematic_chain import KinematicChain
 
@@ -53,6 +54,23 @@ class Robot2D(KinematicChain):
         norm = plt.Normalize(vmin=0, vmax=n_joints)
         colors = cmap(norm(range(n_joints)))
         return colors
+
+    @property
+    def joint_range(self):
+        j_ranges = []
+        for j in self.joints:
+            j_ranges.append(j.j_range)
+        return j_ranges
+
+    def joint_range_per_chain(self, chain: list[str]):
+        joint_range = []
+        chain_no_base = chain[1:]
+        for j_name in chain_no_base:
+            assert self._check_node_name_exist(
+                j_name
+            ), f"{j_name} does not exist, failed to get joint range."
+            joint_range.append(self.joint_name_map[j_name].j_range)
+        return joint_range
 
     def _check_joint_connection(self, joint_name: str, parent_name: str):
         if parent_name == self.base_name:
@@ -139,7 +157,7 @@ class Robot2D(KinematicChain):
                 verticalalignment="center",
             )
 
-    def plot(self, ax: plt.Axes = None) -> plt.Axes:
+    def plot(self, ax: plt.Axes = None, show_fig: bool = True) -> plt.Axes:
         if ax is None:
             fig, ax = plt.subplots()
             ax.set_aspect("equal")
@@ -149,7 +167,8 @@ class Robot2D(KinematicChain):
                 self._plot_parallel_joint(ax, joint, color=c)
             else:
                 joint.plot(ax, color=c)
-        plt.show()
+        if show_fig:
+            plt.show()
         return ax
 
     def _chain_forward(self, chain: list[str]):
@@ -162,7 +181,48 @@ class Robot2D(KinematicChain):
         if not self.parallel_joints:
             ends = []
             for chain in self.struct:
-                ends.append(self._chain_forward(chain))
+                ends.append(self.chain_forward(chain))
             return ends
         else:
-            pass  # TODO
+            pass  # TODO for parallel robot
+
+    def inverse(self, end: np.ndarray):
+        assert end.shape == (
+            3,
+        ), f"End point shape {end.shape} is not valid for inverse kinematics."
+        if not self.parallel_joints:
+            pass
+        else:  # TODO for parallel robot
+            pass
+
+    def sample_j_range(self, j_range: list, n_samples: int):
+        j_range = np.array(j_range).swapaxes(0, 1)
+        j_samples = np.linspace(j_range[0], j_range[1], n_samples)
+        return j_samples
+
+    def workspace_per_chain(self, chain: list[str], n_samples: int = 50):
+        j_ranges = self.joint_range_per_chain(chain)
+        j_samples = self.sample_j_range(j_ranges, n_samples)
+        j_samples_stack = np.meshgrid(*j_samples.T)
+        j_samples_stack = np.stack(j_samples_stack, axis=-1)
+        j_samples_stack = j_samples_stack.reshape(-1, len(chain) - 1)
+        ends = []
+        chain_no_base = chain[1:]
+        for j_v in j_samples_stack:
+            for i, j_name in enumerate(chain_no_base):
+                self.joint_name_map[j_name].new_joint_value(j_v[i])
+                ends.append(self.chain_forward(chain))
+        return np.array(ends)
+
+    def workspace(self, n_samples: int = 50):
+        ends_by_chain = []
+        for chain in self.struct:
+            ends_by_chain.append(self.workspace_per_chain(chain, n_samples=n_samples))
+        return np.concatenate(ends_by_chain, axis=0)
+
+    def plot_workspace(self, ax: plt.Axes = None):
+        ax = self.plot(ax, show_fig=False)
+        ends_by_chain = self.workspace()
+        ax.plot(ends_by_chain[:, 0], ends_by_chain[:, 1], ".", color="black")
+        plt.show()
+        return ax

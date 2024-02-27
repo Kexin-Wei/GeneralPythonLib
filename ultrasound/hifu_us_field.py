@@ -6,17 +6,17 @@ import json
 
 import matplotlib.pyplot as plt
 
-from ..utility.define_class import INT_OR_FLOAT, LIST_OR_NUMPY, NEIGHBOUR_PACKING_TYPE
+from ..utils.define_class import INT_OR_FLOAT, LIST_OR_NUMPY, NEIGHBOUR_PACKING_TYPE
 from ..med_image.image_processing import ImageProcessor as imgPro
-from ..utility.utillity import toStr
+from ..utils.utils import toStr
 
 
 def read_xlsx(
-        hifuType=1001,
-        recordFileName: str = "scan_record.json",
-        date=None,
-        scanPlan=None,
-        dataType=None,
+    hifuType=1001,
+    recordFileName: str = "scan_record.json",
+    date=None,
+    scanPlan=None,
+    dataType=None,
 ) -> tuple[np.ndarray, pd.arrays.PandasArray, pd.arrays.PandasArray, float, float]:
     hifuType = toStr(hifuType)
     date = toStr(date)
@@ -49,7 +49,7 @@ def read_xlsx(
 
 
 def findDbArea(
-        scanArray: np.ndarray, dbValue: float = -6
+    scanArray: np.ndarray, dbValue: float = -6
 ) -> tuple[np.ndarray, np.ndarray, float]:
     """
     :param scanArray
@@ -102,10 +102,10 @@ def findDbArea(
 
 
 def singleCircleMask2D(
-        scanArray: np.ndarray,
-        modelRadius: INT_OR_FLOAT,
-        centerIj: LIST_OR_NUMPY,
-        spacings: LIST_OR_NUMPY,
+    scanArray: np.ndarray,
+    modelRadius: INT_OR_FLOAT,
+    centerIj: LIST_OR_NUMPY,
+    spacings: LIST_OR_NUMPY,
 ) -> np.ndarray:
     """
     :param scanArray
@@ -154,11 +154,11 @@ def integralXY(scanArray: np.ndarray, spacings: LIST_OR_NUMPY) -> float:
 
 
 def egoThermalIntegral(
-        scanArray: np.ndarray,
-        modelRadius: INT_OR_FLOAT,
-        centerIj: LIST_OR_NUMPY,
-        spacings: LIST_OR_NUMPY,
-        showFlag: bool = False,
+    scanArray: np.ndarray,
+    modelRadius: INT_OR_FLOAT,
+    centerIj: LIST_OR_NUMPY,
+    spacings: LIST_OR_NUMPY,
+    showFlag: bool = False,
 ) -> float:
     """
     create an ellipse mask at the centerIj of the model and sum that area.
@@ -188,10 +188,10 @@ def egoThermalIntegral(
 
 
 def packNeighbourLocation(
-        modelRadiusImage: float,
-        centerIj: LIST_OR_NUMPY,
-        nNeighbour: int,
-        packingType: NEIGHBOUR_PACKING_TYPE = "hexagonal",
+    modelRadiusImage: float,
+    centerIj: LIST_OR_NUMPY,
+    nNeighbour: int,
+    packingType: NEIGHBOUR_PACKING_TYPE = "hexagonal",
 ) -> np.ndarray:
     """
     Packing type can refer to https://en.wikipedia.org/wiki/Circle_packing
@@ -221,10 +221,10 @@ def packNeighbourLocation(
 
 
 def singleNeighbourThermalIntegral(
-        scanArray: np.ndarray,
-        modelRadius: INT_OR_FLOAT,
-        neighbourCenter: LIST_OR_NUMPY,
-        spacings: LIST_OR_NUMPY,
+    scanArray: np.ndarray,
+    modelRadius: INT_OR_FLOAT,
+    neighbourCenter: LIST_OR_NUMPY,
+    spacings: LIST_OR_NUMPY,
 ) -> np.ndarray:
     mask = singleCircleMask2D(scanArray, modelRadius, neighbourCenter, spacings)
     singleNeighbourScan = mask * scanArray
@@ -232,13 +232,13 @@ def singleNeighbourThermalIntegral(
 
 
 def neighbourThermalIntegral(
-        scanArray: np.ndarray,
-        modelRadius: INT_OR_FLOAT,
-        centerIj: LIST_OR_NUMPY,
-        spacings: LIST_OR_NUMPY,
-        nNeighbour: int,
-        packingType: NEIGHBOUR_PACKING_TYPE = "hexagonal",
-        showFlag: bool = False,
+    scanArray: np.ndarray,
+    modelRadius: INT_OR_FLOAT,
+    centerIj: LIST_OR_NUMPY,
+    spacings: LIST_OR_NUMPY,
+    nNeighbour: int,
+    packingType: NEIGHBOUR_PACKING_TYPE = "hexagonal",
+    showFlag: bool = False,
 ) -> tuple[float, float]:
     modelRadiusImage = modelRadius / spacings[0]
     neighbourLocs = packNeighbourLocation(

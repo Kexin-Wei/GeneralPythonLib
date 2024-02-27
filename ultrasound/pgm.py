@@ -45,7 +45,7 @@ from matplotlib.figure import Figure
 from scipy import ndimage, signal
 from typing import Optional, Sequence
 
-from ..utility.define_class import STR_OR_PATH, INT_OR_FLOAT
+from ..utils.define_class import STR_OR_PATH, INT_OR_FLOAT
 
 
 class PGMFile:
@@ -120,8 +120,8 @@ class PGMFile:
         self.stftMagnitudeDb = None
         self.stftMagnitudeDbMean = None
         self.defaultStftParameters = {
-            "fftLength"       : 1024,
-            "overlapLength"   : 896,
+            "fftLength": 1024,
+            "overlapLength": 896,
             "hannWindowLength": 1024,
         }
         self.lastUserStftParameters = None
@@ -144,10 +144,10 @@ class PGMFile:
             next(fID)
 
     def readPGM(
-            self,
-            DEINTERLEAVE: bool = False,
-            SAMPLE_AT_60MHZ: bool = True,
-            printOut: bool = True,
+        self,
+        DEINTERLEAVE: bool = False,
+        SAMPLE_AT_60MHZ: bool = True,
+        printOut: bool = True,
     ):
         if self.fileFullPath.suffix != ".pgm":  # if found out not python
             print("Currently only support .pgm file")
@@ -320,9 +320,9 @@ class PGMFile:
             )
 
     def _updateDynamicRange(
-            self,
-            upperDisplayRangeDb: Optional[INT_OR_FLOAT] = None,
-            lowerDisplayRangeDb: Optional[INT_OR_FLOAT] = None,
+        self,
+        upperDisplayRangeDb: Optional[INT_OR_FLOAT] = None,
+        lowerDisplayRangeDb: Optional[INT_OR_FLOAT] = None,
     ) -> bool:
         if lowerDisplayRangeDb is None:
             lowerDisplayRangeDb = self.defaultDynamicRange[0]
@@ -342,23 +342,23 @@ class PGMFile:
         return False
 
     def _getBMode(
-            self,
-            upperDisplayRangeDb: Optional[INT_OR_FLOAT] = None,
-            lowerDisplayRangeDb: Optional[INT_OR_FLOAT] = None,
+        self,
+        upperDisplayRangeDb: Optional[INT_OR_FLOAT] = None,
+        lowerDisplayRangeDb: Optional[INT_OR_FLOAT] = None,
     ):
         """
         calculate the b mode med_image array, show it by default
         """
         if (
-                self._updateDynamicRange(
-                    upperDisplayRangeDb=upperDisplayRangeDb,
-                    lowerDisplayRangeDb=lowerDisplayRangeDb,
-                )
-                or self.bModeData is None
+            self._updateDynamicRange(
+                upperDisplayRangeDb=upperDisplayRangeDb,
+                lowerDisplayRangeDb=lowerDisplayRangeDb,
+            )
+            or self.bModeData is None
         ):
             assert (
-                    self.upperDisplayRangeDb is not None
-                    and self.lowerDisplayRangeDb is not None
+                self.upperDisplayRangeDb is not None
+                and self.lowerDisplayRangeDb is not None
             )
             temp = np.clip(self.safe_log10(self.env), a_min=0, a_max=np.inf)
             self.bModeData = np.clip(
@@ -373,11 +373,11 @@ class PGMFile:
             )
 
     def _plotBMode(
-            self,
-            upperDisplayRangeDb: Optional[int] = None,
-            lowerDisplayRangeDb: Optional[int] = None,
-            saveFig: bool = False,
-            imagePath: Optional[STR_OR_PATH] = None,
+        self,
+        upperDisplayRangeDb: Optional[int] = None,
+        lowerDisplayRangeDb: Optional[int] = None,
+        saveFig: bool = False,
+        imagePath: Optional[STR_OR_PATH] = None,
     ):
         assert self.bModeData is not None
         self._getBMode(
@@ -397,10 +397,10 @@ class PGMFile:
         plt.close()
 
     def showBMode(
-            self,
-            ax: Optional[plt.Axes] = None,
-            upperDisplayRangeDb: Optional[int] = None,
-            lowerDisplayRangeDb: Optional[int] = None,
+        self,
+        ax: Optional[plt.Axes] = None,
+        upperDisplayRangeDb: Optional[int] = None,
+        lowerDisplayRangeDb: Optional[int] = None,
     ):
         self._getBMode(
             upperDisplayRangeDb=upperDisplayRangeDb,
@@ -417,11 +417,11 @@ class PGMFile:
             ax.set_title(self._bModeTitle)
 
     def saveBMode(
-            self,
-            imageFolderPath: STR_OR_PATH,
-            upperDisplayRangeDb: Optional[int] = None,
-            lowerDisplayRangeDb: Optional[int] = None,
-            replace: bool = False,
+        self,
+        imageFolderPath: STR_OR_PATH,
+        upperDisplayRangeDb: Optional[int] = None,
+        lowerDisplayRangeDb: Optional[int] = None,
+        replace: bool = False,
     ):
         imageFolderPath = Path(imageFolderPath)
         imagePath = imageFolderPath.joinpath(f"{self.fileFullPath.stem}.png")
@@ -441,10 +441,10 @@ class PGMFile:
             )
 
     def updateStftParameters(
-            self,
-            fftLength: Optional[int] = None,
-            hannWindowLength: Optional[int] = None,
-            overlapLength: Optional[int] = None,
+        self,
+        fftLength: Optional[int] = None,
+        hannWindowLength: Optional[int] = None,
+        overlapLength: Optional[int] = None,
     ) -> bool:
         localsItemsCopy = locals().copy()
         changed = False
@@ -456,8 +456,8 @@ class PGMFile:
                     changed = True
                 else:
                     if (
-                            self.lastUserStftParameters is not None
-                            and k in self.lastUserStftParameters.keys()
+                        self.lastUserStftParameters is not None
+                        and k in self.lastUserStftParameters.keys()
                     ):
                         setattr(self, k, self.lastUserStftParameters[k])
                     else:
@@ -471,21 +471,21 @@ class PGMFile:
         return changed
 
     def getStftMagnitudeDb(
-            self,
-            fftLength: Optional[int] = None,
-            hannWindowLength: Optional[int] = None,
-            overlapLength: Optional[int] = None,
+        self,
+        fftLength: Optional[int] = None,
+        hannWindowLength: Optional[int] = None,
+        overlapLength: Optional[int] = None,
     ) -> np.ndarray:
         """
         stftMagnitudeDb = nFFT x nScanline x nStep
         """
         if (
-                self.updateStftParameters(
-                    fftLength=fftLength,
-                    hannWindowLength=hannWindowLength,
-                    overlapLength=overlapLength,
-                )
-                or self.stftMagnitudeDb is None
+            self.updateStftParameters(
+                fftLength=fftLength,
+                hannWindowLength=hannWindowLength,
+                overlapLength=overlapLength,
+            )
+            or self.stftMagnitudeDb is None
         ):
             assert self.fsMhz is not None and self.hannWindowLength is not None
             f, t, stftData = signal.stft(
@@ -508,22 +508,22 @@ class PGMFile:
         return self.stftMagnitudeDb
 
     def getStftMagnitudeDbMean(
-            self,
-            fftLength: Optional[int] = None,
-            hannWindowLength: Optional[int] = None,
-            overlapLength: Optional[int] = None,
+        self,
+        fftLength: Optional[int] = None,
+        hannWindowLength: Optional[int] = None,
+        overlapLength: Optional[int] = None,
     ) -> np.ndarray:
         """
         self.stftMagnitudeDb = nFFT x rf_scanline x stft_t
         self.stftMagnitudeDbMean = nFFT x rf_scanline
         """
         if (
-                self.updateStftParameters(
-                    fftLength=fftLength,
-                    hannWindowLength=hannWindowLength,
-                    overlapLength=overlapLength,
-                )
-                or self.stftMagnitudeDbMean is None
+            self.updateStftParameters(
+                fftLength=fftLength,
+                hannWindowLength=hannWindowLength,
+                overlapLength=overlapLength,
+            )
+            or self.stftMagnitudeDbMean is None
         ):
             self.getStftMagnitudeDb(
                 fftLength=fftLength,
@@ -546,27 +546,27 @@ class PGMFile:
             print("This is not a hifu frame, return stftMagnitudeDbMean instead")
             return self.stftMagnitudeDbMean.mean(axis=-1)
         return self.stftMagnitudeDbMean[
-               :, self.hifuScanLine[0]: self.hifuScanLine[1]
-               ].mean(axis=-1)
+            :, self.hifuScanLine[0] : self.hifuScanLine[1]
+        ].mean(axis=-1)
 
     def showStft(
-            self,
-            fig: Optional[Figure] = None,
-            ax: Optional[plt.Axes] = None,
-            saveFig: bool = False,
-            imagePath: Optional[STR_OR_PATH] = None,
+        self,
+        fig: Optional[Figure] = None,
+        ax: Optional[plt.Axes] = None,
+        saveFig: bool = False,
+        imagePath: Optional[STR_OR_PATH] = None,
     ):
         assert (
-                isinstance(self.rf, np.ndarray)
-                and self.fsMhz is not None
-                and self.hannWindowLength is not None
+            isinstance(self.rf, np.ndarray)
+            and self.fsMhz is not None
+            and self.hannWindowLength is not None
         )
         if self.hifuScanLine is None:
             stftSource = self.rf.T.flatten()
         else:
             stftSource = self.rf[
-                         :, self.hifuScanLine[0]: self.hifuScanLine[1]
-                         ].T.flatten()
+                :, self.hifuScanLine[0] : self.hifuScanLine[1]
+            ].T.flatten()
         f, t, stftData = signal.stft(
             stftSource,
             self.fsMhz,
@@ -630,6 +630,6 @@ class PGMFile:
     @property
     def _bModeTitle(self) -> str:
         return (
-                f"B-mode, freq: {self.frequency:.1f}, "
-                + f"Dynamic Range: {self.lowerDisplayRangeDb}-{self.upperDisplayRangeDb}"
+            f"B-mode, freq: {self.frequency:.1f}, "
+            + f"Dynamic Range: {self.lowerDisplayRangeDb}-{self.upperDisplayRangeDb}"
         )

@@ -2,7 +2,7 @@ import numpy as np
 import cv2 as cv
 from collections import deque
 from pathlib import Path
-from ..utility.define_class import TwoDConnectionType, STR_OR_PATH
+from ..utils.define_class import TwoDConnectionType, STR_OR_PATH
 from enum import Enum
 
 

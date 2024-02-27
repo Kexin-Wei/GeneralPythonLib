@@ -1,5 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import Tuple
 from .reference_frame import DH
 from ..utility.define_class import Dimension, JointType
@@ -98,9 +96,11 @@ class Joint2D(Link2D):
         l: float = 1,
         name: str = "",
         rad: bool = False,
+        j_range: tuple = (0, np.pi),
     ):
         super().__init__(x, y, theta, l, name, rad)
         self.j_type = j_type
+        self.j_range = j_range
 
     def plot(self, ax: plt.Axes, color="red"):
         self._plot_start_point(ax, color=color, markersize=25)
@@ -112,6 +112,9 @@ class Joint2D(Link2D):
             self.new_theta(j_value)
         elif self.j_type == JointType.prismatic:
             self.new_l(j_value)
+
+    def new_joint_range(self, j_range: tuple):
+        self.j_range = j_range
 
     def new_pos(self, x, y):
         self.x = x

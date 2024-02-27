@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from ..utility.define_class import INT_OR_FLOAT, TwoDConnectionType
+from ..utils.define_class import INT_OR_FLOAT, TwoDConnectionType
 
 
 class ImageProcessor:
@@ -9,7 +9,7 @@ class ImageProcessor:
 
     @staticmethod
     def binary(
-            image: np.ndarray, threshold: INT_OR_FLOAT = 0, dtype=None
+        image: np.ndarray, threshold: INT_OR_FLOAT = 0, dtype=None
     ) -> np.ndarray:
         binaryImage = image > threshold
         if dtype is not None:
@@ -18,7 +18,7 @@ class ImageProcessor:
 
     @staticmethod
     def removeIsolatedPoint(
-            image: np.ndarray, connectionType: TwoDConnectionType = TwoDConnectionType.four
+        image: np.ndarray, connectionType: TwoDConnectionType = TwoDConnectionType.four
     ) -> np.ndarray:
         """
         :param image: a numpy array
@@ -59,7 +59,7 @@ class ImageProcessor:
         for i in np.arange(1, nLabel):
             sizeConnectedComponents.append(np.sum(connectedComponents == i))
         biggestComponent = connectedComponents == (
-                np.argmax(sizeConnectedComponents) + 1
+            np.argmax(sizeConnectedComponents) + 1
         )
         return biggestComponent.astype(np.uint8)
 

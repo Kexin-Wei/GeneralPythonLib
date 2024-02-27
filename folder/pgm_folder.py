@@ -3,7 +3,7 @@ import natsort
 
 from typing import Dict, Optional
 
-from ..utility.define_class import STR_OR_PATH, STR_OR_LIST, PATH_OR_LIST
+from ..utils.define_class import STR_OR_PATH, STR_OR_LIST, PATH_OR_LIST
 from ..ultrasound.pgm import PGMFile
 from .basic import FolderMgBase, FolderTagMg
 
