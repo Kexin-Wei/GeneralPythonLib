@@ -6,7 +6,7 @@ from typing import Union
 from dataclasses import dataclass
 from ..utility.define_class import JointType
 from .joint import Joint2D
-from .kinematics import KinematicChain
+from .kinematic_chain import KinematicChain
 
 
 @dataclass
@@ -37,10 +37,11 @@ class Robot2D(KinematicChain):
         norm = plt.Normalize(vmin=0, vmax=n_joints)
         colors = cmap(norm(range(n_joints)))
         return colors
+
     @property
     def struct(self):
         return self.get_structure()
-    
+
     @property
     def parallel_joints(self):
         return list(self.parallel_joint_name_map.values())
@@ -52,7 +53,7 @@ class Robot2D(KinematicChain):
         norm = plt.Normalize(vmin=0, vmax=n_joints)
         colors = cmap(norm(range(n_joints)))
         return colors
-    
+
     def _check_joint_connection(self, joint_name: str, parent_name: str):
         if parent_name == self.base_name:
             return
@@ -150,12 +151,12 @@ class Robot2D(KinematicChain):
                 joint.plot(ax, color=c)
         plt.show()
         return ax
-    
-    def _chain_forward(self, chain:list[str]):
-        T=np.eye(4)
+
+    def _chain_forward(self, chain: list[str]):
+        T = np.eye(4)
         for joint_name in chain:
-            joint=self.joint_name_map[joint_name]
-            T=T@joint.T
+            joint = self.joint_name_map[joint_name]
+            T = T @ joint.T
 
     def forward(self):
         if not self.parallel_joints:
@@ -164,5 +165,4 @@ class Robot2D(KinematicChain):
                 ends.append(self._chain_forward(chain))
             return ends
         else:
-            pass #TODO
-            
+            pass  # TODO
