@@ -1,0 +1,92 @@
+@startuml
+hide empty members
+hide empty methods
+hide empty fields
+enum DimType {
+    TWO_DIMENSION
+    THREE_DIMENSION
+}
+class DH {
+    +d: float - Meter
+    +theta: float - Radian
+    +a: float - Meter
+    +alpha: float - Radian
+    +dim: DimType
+    +T: sympy.Matrix
+    +update_d(d: float)
+    +update_theta(theta: float)
+    +update_a(a: float)
+    +update_alpha(alpha: float)
+    +update(d: float, theta: float, a: float, alpha: float)
+}
+
+DH --> DimType
+
+class Node {
+    +parent: set()
+    +child: set()
+    +node_name: str
+    +add_parent(parent: Node)
+    +add_child(child: Node)
+    +remove_parent(parent: Node)
+    +remove_child(child: Node)
+}
+
+class ReferenceFrame  {
+    +r: float - Meter, displacement
+    +v: float - Meter/Second, linear velocity
+    +w: float - Radian/Second, angular velocity
+    +q: Quaternion - rotation
+    +dq: DualQuaternion - displacement and rotation
+    +rdq: DualQuaternion - for computation
+    +wdq: DualQuaternion - for computation
+    +add_as_pure_quaternion(vec: sympy.Matrix(3, 1))
+    +swap()
+}
+
+ReferenceFrame <|-- Node
+ReferenceFrame --> Quaternion
+ReferenceFrame --> DualQuaternion
+
+
+class Quaternion{
+    +v: sympy.Matrix - 4d vector
+    +vec: sympy.Matrix - v[1:4]
+    +print()
+    +__add__(other: Quaternion)
+    +__sub__(other: Quaternion)
+    +__mul__(other: Quaternion)
+    +__truediv__(other: Quaternion)
+    +conjugate()
+    +inverse()
+    +norm()
+    +unit() // normalize
+    +cross(other: Quaternion)
+    +rotate(rBA_X: Quaternion) // via qYX to rBA_Y
+    +from_euler(theta: float, n: sympy.Matrix(3, 1))
+    +from_pure(vec: sympy.Matrix(3, 1))
+    +as_pure()
+}
+
+class DualQuaternion{
+    +v: sympy.Matrix - 8d vector
+    +real: Quaternion - v[0:4]
+    +dual: Quaternion - v[4:8]
+    +print()
+    +__add__(other: DualQuaternion)
+    +__sub__(other: DualQuaternion)
+    +__mul__(other: DualQuaternion)
+    +__truediv__(other: DualQuaternion)
+    +conjugate()
+    +inverse()
+    +norm()
+    +unit() // normalize
+    +cross(other: DualQuaternion)
+    +swap()
+    +as_pure_real(vec: sympy.Matrix(3, 1))
+    +from_real_dual(real: Quaternion, dual: Quaternion)
+    +from_quaternion_vector(qYX: Quaternion, tYX_X: sympy.Matrix(3, 1))
+    +from_real_quaternion(q: Quaternion)
+    +from_euler_vector(theta: float, n: sympy.Matrix(3, 1), t: sympy.Matrix(3, 1))
+}
+@enduml

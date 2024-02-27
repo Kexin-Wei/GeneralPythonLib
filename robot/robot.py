@@ -7,8 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .joint import Joint2D
-from .kinematics import KinematicChain
-from ..utils.define_class import JointType
+from .kinematic_chain import KinematicChain
 
 
 @dataclass
@@ -172,14 +171,11 @@ class Robot2D(KinematicChain):
             plt.show()
         return ax
 
-    def chain_forward(self, chain: list[str]):
+    def _chain_forward(self, chain: list[str]):
         T = np.eye(4)
-        chain_no_base = chain[1:]
-        for joint_name in chain_no_base:
+        for joint_name in chain:
             joint = self.joint_name_map[joint_name]
             T = T @ joint.T
-        p = T[:3, 3]
-        return p
 
     def forward(self):
         if not self.parallel_joints:

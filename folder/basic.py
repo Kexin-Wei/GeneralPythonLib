@@ -3,6 +3,7 @@ Several folder Managers based on folderMeg, including:
     - pgmFolderMg: manage the pgm files inside the folder
     - parentFolderMg: manage the child directories inside the folder
 """
+
 import natsort
 import numpy as np
 from pathlib import Path
@@ -28,15 +29,15 @@ class FolderMgBase:
     """
 
     def __init__(self):
-        self.fullPath: Optional[Path] = None
+        self.full_path: Path = None
         self.parentFolder = None
         self.folderName = None
         self.tags = None
-        self.dirs: Optional[Sequence[Path]] = None
-        self.files: Optional[Sequence[Path]] = None
+        self.dirs: Sequence[Path] = None
+        self.files: Sequence[Path] = None
 
     @staticmethod
-    def _strToList(anyStr: STR_OR_LIST) -> list:
+    def _str_to_list(anyStr: STR_OR_LIST) -> list:
         if isinstance(anyStr, str):
             return [anyStr]
         if isinstance(anyStr, list):
@@ -45,7 +46,7 @@ class FolderMgBase:
         return []
 
     @staticmethod
-    def _pathToList(anyPath: PATH_OR_LIST) -> list:
+    def _path_to_list(anyPath: PATH_OR_LIST) -> list:
         if isinstance(anyPath, Path):
             return [anyPath]
         if isinstance(anyPath, list):
@@ -53,26 +54,26 @@ class FolderMgBase:
         print("Input is not a Path or list.")
         return []
 
-    def _getFilesDirs(self):
-        if self.fullPath is not None:
-            self.dirs = [p for p in self.fullPath.iterdir() if p.is_dir()]
-            self.files = [f for f in self.fullPath.iterdir() if f.is_file()]
+    def _ge_files_dirs(self):
+        if self.full_path is not None:
+            self.dirs = [p for p in self.full_path.iterdir() if p.is_dir()]
+            self.files = [f for f in self.full_path.iterdir() if f.is_file()]
             self.dirs = natsort.natsorted(self.dirs)
             self.files = natsort.natsorted(self.files)
 
-    def _getFilePathByExtension(self, extension: str) -> List[Path]:
+    def _get_file_path_by_extension(self, extension: str) -> List[Path]:
         # put extension in a pure string without . and *, e.g. python file input "py"
-        assert self.fullPath is not None
-        return natsort.natsorted(self.fullPath.glob(f"*.{extension}"))
+        assert self.full_path is not None
+        return natsort.natsorted(self.full_path.glob(f"*.{extension}"))
 
-    def _getFilePathByExtensionList(self, extensions: list) -> List[Path]:
-        assert self.fullPath is not None
+    def _get_file_path_by_extension_list(self, extensions: list) -> List[Path]:
+        assert self.full_path is not None
         files = []
         for e in extensions:
-            files.extend(natsort.natsorted(self.fullPath.glob(f"*.{e}")))
+            files.extend(natsort.natsorted(self.full_path.glob(f"*.{e}")))
         return files
 
-    def getRandomFile(self, printOut: bool = True) -> Path:
+    def get_random_file(self, printOut: bool = True) -> Path:
         if self.files is not None and len(self.files) != 0:
             randomIdx = np.random.randint(low=0, high=len(self.files))
             if printOut:
@@ -103,10 +104,10 @@ class FolderMg(FolderMgBase):
 
     def __init__(self, folderFullPath: STR_OR_PATH = Path()):
         super().__init__()
-        self.fullPath = Path(folderFullPath)
-        self.parentFolder = self.fullPath.parent
-        self.folderName = self.fullPath.name
-        self._getFilesDirs()
+        self.full_path = Path(folderFullPath)
+        self.parentFolder = self.full_path.parent
+        self.folderName = self.full_path.name
+        self._ge_files_dirs()
 
     def ls(self, lsOption: Optional[LsOptionType] = None) -> None:
         if lsOption == LsOptionType.dir or lsOption is None:
@@ -132,6 +133,17 @@ class FolderMg(FolderMgBase):
                 if len(self.files) > 5:
                     print(f"  - ...")
 
+    def get_file_group_by_extension(self) -> dict:
+        fileGroup = {}
+        if self.files is not None:
+            for f in self.files:
+                extension = f.suffix.lower()
+                if extension in fileGroup:
+                    fileGroup[extension].append(f)
+                else:
+                    fileGroup[extension] = [f]
+        return fileGroup
+
 
 class FolderTagMg(FolderMgBase):
     """
@@ -144,21 +156,21 @@ class FolderTagMg(FolderMgBase):
         if tags is None:
             tags = []
         super().__init__()
-        self.fullPath = Path(fullPath)
-        self.parentFolder = self.fullPath.parent
-        self.folderName = self.fullPath.name
-        self._getFilesDirs()
-        self.tags = set(self._strToList(tags))
+        self.full_path = Path(fullPath)
+        self.parentFolder = self.full_path.parent
+        self.folderName = self.full_path.name
+        self._ge_files_dirs()
+        self.tags = set(self._str_to_list(tags))
 
-    def addTags(self, tags: STR_OR_LIST):
-        tags = self._strToList(tags)
+    def add_tags(self, tags: STR_OR_LIST):
+        tags = self._str_to_list(tags)
         for t in tags:
             self.tags.add(t)
 
-    def containsTag(self, tag: str) -> bool:
+    def contains_tag(self, tag: str) -> bool:
         return tag in self.tags
 
-    def lsTags(self):
+    def ls_tags(self):
         print(f"\nCurrent Folder '{self.folderName}' contains tags:")
         for t in self.tags:
             print(f"  - {t}")
@@ -173,7 +185,7 @@ class URDFFolderMg(FolderMg):
         super().__init__(folderFullPath)
         self.urdfs = {}
 
-    def printURDFFiles(self):
+    def print_URDF_files(self):
         for k, v in self.urdfs.items():
             if isinstance(v, Path):
                 print(f"\nIn folder {k}, there is one urdf file:")
@@ -183,10 +195,10 @@ class URDFFolderMg(FolderMg):
                 for f in v:
                     print(f"  - {f.name}")
 
-    def getURDFFromAllDir(self):
+    def get_URDF_from_all_dir(self):
         if self.nDirs:
             for d in self.dirs:
-                urdfs = self.getURDF(d)
+                urdfs = self.get_URDF(d)
                 if len(urdfs):
                     if len(urdfs) > 1:
                         self.urdfs[d.name] = urdfs
@@ -194,7 +206,7 @@ class URDFFolderMg(FolderMg):
                         self.urdfs[d.name] = urdfs[0]
 
     @staticmethod
-    def getURDF(dirPath):
+    def get_URDF(dirPath):
         urdfs = []
         dirMg = FolderMg(dirPath)
         if dirMg.nFile:
