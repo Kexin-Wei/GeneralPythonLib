@@ -1,4 +1,5 @@
 from .reference_frame import Node
+import warnings
 
 
 class KinematicChain:
@@ -9,13 +10,13 @@ class KinematicChain:
     """
 
     def __init__(self) -> None:
-        self.nodes = {}
+        self.nodes: dict[str, Node] = {}
         self.base_name = "BASE"
         self.base_node = Node(self.base_name, self.base_name, None)
         self.nodes[self.base_name] = self.base_node
 
     @property
-    def node_names(self):
+    def node_names(self) -> list[str]:
         return list(self.nodes.keys())
 
     def add_node(
@@ -127,7 +128,7 @@ class KinematicChain:
         node.add_parent(parent_name)
         node.add_child(child_name)
 
-    def get_node_child_to_end(self, node_name: str) -> list[str]:
+    def get_node_child_to_end(self, node_name: str) -> list:
         if not self._check_node_name_exist(node_name):
             warnings.warn(f"Node name {node_name} does not exist.")
             return None
@@ -153,5 +154,5 @@ class KinematicChain:
             return node_links[0]
         return node_links
 
-    def get_structure(self):
+    def get_structure(self) -> list:
         return self.get_node_child_to_end(self.base_name)

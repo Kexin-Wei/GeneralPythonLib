@@ -1,7 +1,13 @@
 import warnings
 import numpy as np
-from ..utility.define_class import Dimension
+from enum import Enum
+
 from .quaternion import Quaternion, DualQuaternion
+
+
+class Dimension(Enum):
+    two = 2
+    three = 3
 
 
 class DH:
@@ -20,7 +26,7 @@ class DH:
         a: float,
         alpha: float,
         calcType: Dimension = Dimension.three,
-    ):
+    ) -> None:
         self.d = d
         self.theta = theta
         self.a = a
@@ -31,7 +37,7 @@ class DH:
             self.alpha = 0
 
     @property
-    def T(self):
+    def T(self) -> np.ndarray:
         return np.array(
             [
                 [
@@ -51,19 +57,19 @@ class DH:
             ]
         )
 
-    def update_d(self, d):
+    def update_d(self, d) -> None:
         self.d = d
 
-    def update_theta(self, theta):
+    def update_theta(self, theta) -> None:
         self.theta = theta
 
-    def update_a(self, a):
+    def update_a(self, a) -> None:
         self.a = a
 
-    def update_alpha(self, alpha):
+    def update_alpha(self, alpha) -> None:
         self.alpha = alpha
 
-    def update(self, d, theta, a, alpha):
+    def update(self, d, theta, a, alpha) -> Node:
         self.d = d
         self.theta = theta
         self.a = a
@@ -115,7 +121,7 @@ class Node:
             return
         self.child.add(child_name)
 
-    def remove_parent(self, parent_name: str):
+    def remove_parent(self, parent_name: str) -> None:
         assert parent_name is not None, "Parent name cannot be None."
         if parent_name not in self.parent:
             warnings.warn(
@@ -125,7 +131,7 @@ class Node:
             return
         self.parent.remove(parent_name)
 
-    def remove_child(self, child_name: str):
+    def remove_child(self, child_name: str) -> None:
         if child_name is None:
             warnings.warn(
                 f"Child name is None, node {self.node_name} remove child failed."
@@ -207,7 +213,7 @@ class DualQuaternionReferenceFrame:
         linear_acceleration: np.ndarray,
         angular_acceleration: np.ndarray,
         rotation: Quaternion,
-    ):
+    ) -> None:
         assert displacement.shape == (3,), "Displacement must be a 3D vector."
         assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
         assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."

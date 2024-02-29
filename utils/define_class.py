@@ -34,16 +34,6 @@ class ImageSourceType(Enum):
     image = "image"
 
 
-class JointType(Enum):
-    revolute = "revolute"
-    prismatic = "prismatic"
-
-
-class Dimension(Enum):
-    two = 2
-    three = 3
-
-
 INT_OR_FLOAT = Union[int, float]
 STR_OR_LIST = Union[str, Sequence]
 

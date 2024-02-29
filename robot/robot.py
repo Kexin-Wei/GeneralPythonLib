@@ -6,9 +6,8 @@ from typing import Union
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .joint import Joint2D
+from .joint import Joint2D, JointType
 from .kinematic_chain import KinematicChain
-
 
 @dataclass
 class Point:
@@ -20,19 +19,25 @@ class Point:
 class Robot2D(KinematicChain):
     def __init__(self) -> None:
         super().__init__()
-        self.joint_name_map = {}
-        self.parallel_joint_name_map = {}
+        self.joint_name_map: dict[str, Joint2D] = {}
+        self.parallel_joint_name_map: dict[str, Joint2D] = {}
+
+    @classmethod
+    def from_joint_list(cls, joint_list: list[Joint2D]) -> "Robot2D":
+        robot = cls()
+        robot.add_joints(joint_list)
+        return robot
 
     @property
-    def base(self):
+    def base(self) -> str:
         return self.base_name
 
     @property
-    def joints(self):
+    def joints(self) -> list[Joint2D]:
         return list(self.joint_name_map.values())
 
     @property
-    def colors(self):
+    def colors(self) -> list:
         n_joints = len(self.joints)
         cmap = plt.get_cmap("hsv")
         norm = plt.Normalize(vmin=0, vmax=n_joints)
@@ -40,15 +45,15 @@ class Robot2D(KinematicChain):
         return colors
 
     @property
-    def struct(self):
+    def struct(self) -> list:
         return self.get_structure()
 
     @property
-    def parallel_joints(self):
+    def parallel_joints(self) -> list[Joint2D]:
         return list(self.parallel_joint_name_map.values())
 
     @property
-    def parallel_colors(self):
+    def parallel_colors(self) -> list:
         n_joints = len(self.parallel_joints)
         cmap = plt.get_cmap("tab20")
         norm = plt.Normalize(vmin=0, vmax=n_joints)
@@ -56,13 +61,13 @@ class Robot2D(KinematicChain):
         return colors
 
     @property
-    def joint_range(self):
+    def joint_range(self) -> list[tuple]:
         j_ranges = []
         for j in self.joints:
             j_ranges.append(j.j_range)
         return j_ranges
 
-    def joint_range_per_chain(self, chain: list[str]):
+    def joint_range_per_chain(self, chain: list[str]) -> list[tuple]:
         joint_range = []
         chain_no_base = chain[1:]
         for j_name in chain_no_base:
@@ -72,7 +77,7 @@ class Robot2D(KinematicChain):
             joint_range.append(self.joint_name_map[j_name].j_range)
         return joint_range
 
-    def _check_joint_connection(self, joint_name: str, parent_name: str):
+    def _check_joint_connection(self, joint_name: str, parent_name: str) -> None:
         if parent_name == self.base_name:
             return
         if parent_name not in self.joint_name_map.keys():
@@ -97,7 +102,7 @@ class Robot2D(KinematicChain):
         self.joint_name_map[joint.name] = joint
         self._check_joint_connection(joint.name, parent_name)
 
-    def add_joints(self, joints: list[Joint2D], joint_relation: dict = None):
+    def add_joints(self, joints: list[Joint2D], joint_relation: dict = None) -> None:
         parent_name = self.base_name
         for i, j in enumerate(joints):
             if j.name in self.joint_name_map.keys():
@@ -114,7 +119,7 @@ class Robot2D(KinematicChain):
         parent_name: str,
         add_joint_loc: Union[Point, list[float]],
         add_joint_type: JointType.revolute,
-    ):
+    ) -> None:
         assert self._check_node_name_exist(joint_name), (
             f"Node name {joint_name} does not exist, "
             f"add parallel joint to {parent_name} failed."
@@ -138,13 +143,13 @@ class Robot2D(KinematicChain):
         self.add_parent_to_node(new_knot.name, parent_name)
         self.parallel_joint_name_map[new_knot.name] = new_knot
 
-    def check_joint_parents_connection(self, joint_name: str):
+    def check_joint_parents_connection(self, joint_name: str) -> None:
         j = self.joint_name_map[joint_name]
         parent_names = self.nodes[joint_name].parent
         for parent_name in parent_names:
             self._check_joint_connection(joint_name, parent_name)
 
-    def _plot_parallel_joint(self, ax: plt.Axes, joint: Joint2D, color="black"):
+    def _plot_parallel_joint(self, ax: plt.Axes, joint: Joint2D, color="black") -> None:
         ax.plot(joint.x, joint.y, "h", color=color, markersize=25)
         if joint.name != "":
             ax.annotate(
@@ -171,17 +176,18 @@ class Robot2D(KinematicChain):
             plt.show()
         return ax
 
-    def _chain_forward(self, chain: list[str]):
+    def _chain_forward(self, chain: list[str]) -> np.ndarray:
         T = np.eye(4)
         for joint_name in chain:
             joint = self.joint_name_map[joint_name]
             T = T @ joint.T
+        return T
 
-    def forward(self):
+    def forward(self) -> list[np.ndarray]:
         if not self.parallel_joints:
             ends = []
             for chain in self.struct:
-                ends.append(self.chain_forward(chain))
+                ends.append(self._chain_forward(chain))
             return ends
         else:
             pass  # TODO for parallel robot
@@ -195,12 +201,12 @@ class Robot2D(KinematicChain):
         else:  # TODO for parallel robot
             pass
 
-    def sample_j_range(self, j_range: list, n_samples: int):
+    def sample_j_range(self, j_range: list, n_samples: int) -> np.ndarray:
         j_range = np.array(j_range).swapaxes(0, 1)
         j_samples = np.linspace(j_range[0], j_range[1], n_samples)
         return j_samples
 
-    def workspace_per_chain(self, chain: list[str], n_samples: int = 50):
+    def workspace_per_chain(self, chain: list[str], n_samples: int = 50) -> np.ndarray:
         j_ranges = self.joint_range_per_chain(chain)
         j_samples = self.sample_j_range(j_ranges, n_samples)
         j_samples_stack = np.meshgrid(*j_samples.T)
@@ -214,13 +220,13 @@ class Robot2D(KinematicChain):
                 ends.append(self.chain_forward(chain))
         return np.array(ends)
 
-    def workspace(self, n_samples: int = 50):
+    def workspace(self, n_samples: int = 50) -> np.ndarray:
         ends_by_chain = []
         for chain in self.struct:
             ends_by_chain.append(self.workspace_per_chain(chain, n_samples=n_samples))
         return np.concatenate(ends_by_chain, axis=0)
 
-    def plot_workspace(self, ax: plt.Axes = None):
+    def plot_workspace(self, ax: plt.Axes = None) -> plt.Axes:
         ax = self.plot(ax, show_fig=False)
         ends_by_chain = self.workspace()
         ax.plot(ends_by_chain[:, 0], ends_by_chain[:, 1], ".", color="black")
