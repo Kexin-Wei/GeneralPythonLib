@@ -1,3 +1,4 @@
+import warnings
 import sympy as sp
 import matplotlib.pyplot as plt
 
@@ -89,7 +90,9 @@ class DH_Symbol:
 
     @staticmethod
     def forward_kinematics(dh_table: sp.Matrix):
-        assert dh_table.shape[1] == 4, "dh_table should have 4 columns"
+        if dh_table.shape[1] != 4:
+            warnings.warn("Error: dh_table should have 4 columns, forward_kinematics failed")
+            return
         n_joint = dh_table.shape[0]
         T = sp.eye(4)
         As = []
@@ -107,7 +110,9 @@ class DH_Symbol:
 
     @staticmethod
     def inverse_kinematics(dh_table: sp.Matrix):
-        assert dh_table.shape[1] == 4, "dh_table should have 4 columns"
+        if dh_table.shape[1] != 4:
+            warnings.warn("Error: dh_table should have 4 columns, inverse_kinematics failed")
+            return
         T, As = DH_Symbol.forward_kinematics(dh_table)
         x, y, z = sp.symbols("x y z")
         a1, a2, a3 = sp.symbols("a1 a2 a3")

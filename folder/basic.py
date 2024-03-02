@@ -5,6 +5,7 @@ Several folder Managers based on folderMeg, including:
 """
 
 import natsort
+import warnings
 import numpy as np
 from pathlib import Path
 from typing import Sequence, Optional, List
@@ -63,14 +64,17 @@ class FolderMgBase:
 
     def _get_file_path_by_extension(self, extension: str) -> List[Path]:
         # put extension in a pure string without . and *, e.g. python file input "py"
-        assert self.full_path is not None
-        return natsort.natsorted(self.full_path.glob(f"*.{extension}"))
+        try:
+            sorted_files = natsort.natsorted(self.full_path.glob(f"*.{extension}"))
+        except Exception as e:
+            warnings.warn(f"Failed to get files with extension {extension}, error: {e}.")
+            sorted_files = []
+        return sorted_files
 
     def _get_file_path_by_extension_list(self, extensions: list) -> List[Path]:
-        assert self.full_path is not None
         files = []
         for e in extensions:
-            files.extend(natsort.natsorted(self.full_path.glob(f"*.{e}")))
+            files.extend(self._get_file_path_by_extension(e))
         return files
 
     def get_random_file(self, printOut: bool = True) -> Path:

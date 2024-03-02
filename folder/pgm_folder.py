@@ -1,6 +1,6 @@
-from pathlib import Path
 import natsort
-
+import warnings
+from pathlib import Path
 from typing import Dict, Optional
 
 from ..utils.define_class import STR_OR_PATH, STR_OR_LIST, PATH_OR_LIST
@@ -27,11 +27,9 @@ class PgmFolder(FolderTagMg):
         self.currentPgm = None
 
     def _getPGMFiles(self):
-        assert self.files is not None
-        self.files = [f for f in self.files if f.suffix == ".pgm"]
+        return self._get_file_path_by_extension(".pgm")
 
     def ls(self):
-        assert self.files is not None
         print(
             f"\nCurrent Folder '{self.folderName}' contains {len(self.files)} pgm files, which are:"
         )
@@ -44,10 +42,13 @@ class PgmFolder(FolderTagMg):
                 break
 
     def readCurrentFile(self, printOut: bool = True) -> PGMFile:
-        assert self.files is not None
         if self.currentFileIndex == 0 and printOut:
             print(f"\nStart reading folder {self.full_path}")
-        self.currentPgm = PGMFile(self.files[self.currentFileIndex], printOut=False)
+        try:
+            self.currentPgm = PGMFile(self.files[self.currentFileIndex], printOut=False)
+        except IndexError:
+            warnings.warn(f"Index {self.currentFileIndex} out of range.")
+            return None
         if printOut:
             print(
                 f"- File idx: {self.currentFileIndex}, name:{self.currentPgm.fileName}, in folder: {self.folderName}"
@@ -68,12 +69,10 @@ class PgmFolder(FolderTagMg):
         lowerDisplayRangeDb: Optional[int] = None,
         replace: bool = False,
     ):
-        assert isinstance(self.full_path, Path)
         if imageRootFolderPath is None:
             imageRootFolderPath = self.full_path.parent
         imageRootFolderPath = Path(imageRootFolderPath)
         imageFolderPath = imageRootFolderPath.joinpath(f"{self.folderName}_b-mode")
-        assert self.files is not None
         for f in self.files:
             pgmFile = PGMFile(f, printOut=False)
             pgmFile.saveBMode(
@@ -101,7 +100,6 @@ class ParentFolderTagMg(FolderTagMg):
         # remove all the folders, and refill with new ones
         folders = self._str_to_list(folders)
         self.dirs = []
-        assert isinstance(self.full_path, Path)
         for fd in folders:
             fdPath = self.full_path.joinpath(fd)
             if fdPath.exists():
@@ -110,7 +108,6 @@ class ParentFolderTagMg(FolderTagMg):
                 print(f"Folder {fd} doesn't exist.")
 
     def ls(self):
-        assert self.dirs is not None
         print(
             f"\nCurrent Folder '{self.folderName}' contains {len(self.dirs)}, which are:"
         )
@@ -118,7 +115,6 @@ class ParentFolderTagMg(FolderTagMg):
             print(f"  - {d.name}")
 
     def readPgmFolder(self, idx: int) -> PgmFolder:
-        assert self.dirs is not None
         return PgmFolder(self.dirs[idx])
 
 
