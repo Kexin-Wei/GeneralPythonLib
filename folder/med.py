@@ -1,6 +1,6 @@
 import SimpleITK as sitk
 from pathlib import Path
-from typing import Sequence, Optional, List, Union
+from typing import List, Union
 from .basic import FolderMg
 from ..utils.define_class import STR_OR_PATH
 from ..med_image.medical_image import VolumeImage
@@ -14,8 +14,8 @@ class BaseMedicalImageFolderMg(FolderMg):
         - Nrrd Image: *.nrrd, *.nhdr
     """
 
-    def __init__(self, folderFullPath: STR_OR_PATH = Path()):
-        super().__init__(folderFullPath)
+    def __init__(self, folder_full_path: STR_OR_PATH = Path()):
+        super().__init__(folder_full_path)
 
     def get_nrrd_image_path(self) -> List[Path]:
         # *.nrrd, *.nhdr
@@ -32,33 +32,39 @@ class BaseMedicalImageFolderMg(FolderMg):
         )
 
 
-FOLDERMG_OR_PATH_OR_STR = Union[FolderMg, Path, str]
+FOLDER_MG_OR_PATH_OR_STR = Union[FolderMg, Path, str]
 
 
 class MedicalFolderMg(FolderMg):
     """
-    Find certain file in a net-structure folder, which has multiple folders that contain their own folders inside them
+    Find certain file in a net-structure folder,
+    which has multiple folders that contain their own folders inside them
     """
 
-    def __init__(self, folderFullPath: STR_OR_PATH = Path()):
-        super().__init__(folderFullPath)
+    def __init__(self, folder_full_path: STR_OR_PATH = Path()):
+        super().__init__(folder_full_path)
         self.t2List = []
         self.dwiList = []
         self.adcList = []
 
     def search_T2_in_current_folder(self):
-        if self.nFile:
+        if self.n_files:
             t2List = []
             for f in self.files:
-                if "t2" in f.name.lower() and ("mha" in f.suffix or "nrrd" in f.suffix):
-                    if "_cor" not in f.name.lower() and "_sag" not in f.name.lower():
+                if "t2" in f.name.lower() and (
+                    "mha" in f.suffix or "nrrd" in f.suffix
+                ):
+                    if (
+                        "_cor" not in f.name.lower()
+                        and "_sag" not in f.name.lower()
+                    ):
                         t2List.append(f)
                         print(f)
             return t2List
         return []
 
     def search_dwi_in_current_folder(self):
-        if self.nFile:
+        if self.n_files:
             dwiList = []
             for f in self.files:
                 if "dwi" in f.name.lower() and (
@@ -70,7 +76,7 @@ class MedicalFolderMg(FolderMg):
         return []
 
     def search_adc_in_current_folder(self):
-        if self.nFile:
+        if self.n_files:
             adcList = []
             for f in self.files:
                 if "adc" in f.name.lower() and (
@@ -83,7 +89,7 @@ class MedicalFolderMg(FolderMg):
 
     def get_T2(self):
         self.t2List.extend(self.search_T2_in_current_folder())
-        if self.nDirs:
+        if self.n_dirs:
             for d in self.dirs:
                 # print("\n--------------------------------------------")
                 # print(f"In folder {d}")
@@ -93,7 +99,7 @@ class MedicalFolderMg(FolderMg):
 
     def get_DWI(self):
         self.dwiList.extend(self.search_dwi_in_current_folder())
-        if self.nDirs:
+        if self.n_dirs:
             for d in self.dirs:
                 # print("\n--------------------------------------------")
                 # print(f"In folder {d}")
@@ -103,7 +109,7 @@ class MedicalFolderMg(FolderMg):
 
     def get_ADC(self):
         self.adcList.extend(self.search_adc_in_current_folder())
-        if self.nDirs:
+        if self.n_dirs:
             for d in self.dirs:
                 # print("\n--------------------------------------------")
                 # print(f"In folder {d}")
@@ -113,70 +119,71 @@ class MedicalFolderMg(FolderMg):
 
 
 class DicomImageFolderMg(BaseMedicalImageFolderMg):
-    """Add more dicom handling functions to BaseMedicalImageFolderMg
-
-    Args:
-        BaseMedicalImageFolderMg: return images path given different med_image formats, currently supported
-            - Meta Image: *.mha, *.mhd
-            - Nifti Image: *.nia, *.nii, *.nii.gz, *.hdr, *.img, *.img.gz
-            - Nrrd Image: *.nrrd, *.nhdr
+    """Add more dicom handling functions to BaseMedicalImageFolderMg:
+    return images path given different med_image formats, currently supported
+        - Meta Image: *.mha, *.mhd
+        - Nifti Image: *.nia, *.nii, *.nii.gz, *.hdr, *.img, *.img.gz
+        - Nrrd Image: *.nrrd, *.nhdr
 
     """
 
-    def __init__(self, folderFullPath: STR_OR_PATH):
-        super().__init__(folderFullPath)
-        self.dicomSeriesFolder: Optional[Sequence[Path]] = None
-        self.dicomSeries: Optional[Sequence[VolumeImage]] = None
+    def __init__(self, folder_full_path: STR_OR_PATH):
+        super().__init__(folder_full_path)
+        self.dicomSeriesFolder: list[Path] = None
+        self.dicomSeries: list[VolumeImage] = None
         self.find_dicom_series_folder()
         self.read_all_dicom_series()
 
-    def read_all_dicom_series(self) -> Sequence[VolumeImage]:
+    def read_all_dicom_series(self) -> list[VolumeImage]:
         """Read all dicom series from a folder
 
         Returns:
             Sequence[VolumeImage]: a list of dicom series
         """
-        if self.dicomSeriesFolder is not None:
+        if self.dicomSeriesFolder is None:
             print("No dicom series found, please read dicom series first")
             return []
         print("read all dicom series")
         for dicomFolder in self.dicomSeriesFolder:
             self.dicomSeries.append(self.read_dicom_series(dicomFolder))
             print(f"- {dicomFolder.name} read")
-        return [self.read_dicom_series(folder) for folder in self.dicomSeriesFolder]
+        return [
+            self.read_dicom_series(folder) for folder in self.dicomSeriesFolder
+        ]
 
-    def read_dicom_series(self, folderPath: STR_OR_PATH) -> VolumeImage:
+    def read_dicom_series(self, folder_path: STR_OR_PATH) -> VolumeImage | None:
         """Read dicom series from a folder
 
         Args:
-            folderPath (STR_OR_PATH): folder path
+            folder_path (STR_OR_PATH): folder path
 
         Returns:
             Sequence[Path]: a list of dicom files
         """
-        if not self._is_a_dicom_series(folderPath):
-            return []
-        series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folderPath))
+        if not self._is_a_dicom_series(folder_path):
+            return None
+        series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folder_path))
         series_file_name = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(
-            str(folderPath), series_IDs[0]
+            str(folder_path), series_IDs[0]
         )
         series_reader = sitk.ImageSeriesReader()
         series_reader.SetFileNames(series_file_name)
         series_reader.MetaDataDictionaryArrayUpdateOn()
         series_reader.LoadPrivateTagsOn()
         img = series_reader.Execute()
-        volumeImg = VolumeImage(img)
+        volumeImg = VolumeImage(img, folder_path)
         return volumeImg
 
     def find_dicom_series_folder(self):
-        if self.dicomSeriesFolder is None:
+        if self.dicomSeriesFolder is not None:
             for folder in self.dirs:
                 if self._is_a_dicom_series(folder):
                     print(f"- {folder.name} is a dicom series")
                     self.dicomSeriesFolder.append(folder)
                 print(f"- {folder.name} is not a dicom series")
         print(
-            f"found {len(self.dicomSeriesFolder)} dicom series already, skip this time"
+            f"found {len(self.dicomSeriesFolder)} dicom series already, "
+            f"skip this time"
         )
 
     def delete_dicom_series(self):
@@ -184,11 +191,13 @@ class DicomImageFolderMg(BaseMedicalImageFolderMg):
             self.dicomSeriesFolder = None
             print("delete dicom series")
 
-    def _is_a_dicom_series(self, folderPath: STR_OR_PATH) -> bool:
-        series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folderPath))
+    @staticmethod
+    def _is_a_dicom_series(folder_path: STR_OR_PATH) -> bool:
+        series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folder_path))
         if not series_IDs:
             print(
-                f"ERROR: given directory {folderPath} does not contain a DICOM series."
+                f"ERROR: given directory {folder_path} does not "
+                f"contain a DICOM series."
             )
             return False
         return True

@@ -10,7 +10,8 @@ from .basic import FolderMgBase, FolderTagMg
 
 class PgmFolder(FolderTagMg):
     """
-    A Child Class of folderMgBase to manage the pgm files inside folder, functions include:
+    A Child Class of folderMgBase to manage the pgm files inside folder,
+    functions include:
         - all parent functions
         - list all the pgm files
         - read pgm files inside the folder
@@ -18,10 +19,14 @@ class PgmFolder(FolderTagMg):
 
     """
 
-    def __init__(self, fullPath: STR_OR_PATH, tags: Optional[STR_OR_LIST] = None):
+    def __init__(
+        self,
+        full_path: STR_OR_PATH,
+        tags: Optional[STR_OR_LIST] = None,
+    ):
         if tags is None:
             tags = []
-        super().__init__(fullPath, tags)
+        super().__init__(full_path, tags)
         self._getPGMFiles()
         self.currentFileIndex = 0
         self.currentPgm = None
@@ -31,7 +36,8 @@ class PgmFolder(FolderTagMg):
 
     def ls(self):
         print(
-            f"\nCurrent Folder '{self.folderName}' contains {len(self.files)} pgm files, which are:"
+            f"\nCurrent Folder '{self.folderName}' contains {len(self.files)} "
+            f"pgm files, which are:"
         )
         nListed = 0
         for f in self.files:
@@ -45,13 +51,16 @@ class PgmFolder(FolderTagMg):
         if self.currentFileIndex == 0 and printOut:
             print(f"\nStart reading folder {self.full_path}")
         try:
-            self.currentPgm = PGMFile(self.files[self.currentFileIndex], printOut=False)
+            self.currentPgm = PGMFile(
+                self.files[self.currentFileIndex], printOut=False
+            )
         except IndexError:
             warnings.warn(f"Index {self.currentFileIndex} out of range.")
             return None
         if printOut:
             print(
-                f"- File idx: {self.currentFileIndex}, name:{self.currentPgm.fileName}, in folder: {self.folderName}"
+                f"- File idx: {self.currentFileIndex}, "
+                f"name:{self.currentPgm.fileName}, in folder: {self.folderName}"
             )
         return self.currentPgm
 
@@ -59,42 +68,49 @@ class PgmFolder(FolderTagMg):
         self.currentFileIndex += 1
         return self.readCurrentFile()
 
-    def readRandomPgm(self, printOut: bool = True) -> PGMFile:
-        return PGMFile(self.get_random_file(printOut=printOut), printOut=False)
+    def readRandomPgm(self, print_out: bool = True) -> PGMFile:
+        return PGMFile(
+            self.get_random_file(print_out=print_out), printOut=False
+        )
 
     def saveBModes(
         self,
-        imageRootFolderPath: Optional[STR_OR_PATH] = None,
-        upperDisplayRangeDb: Optional[int] = None,
-        lowerDisplayRangeDb: Optional[int] = None,
+        image_root_folder_path: Optional[STR_OR_PATH] = None,
+        upper_display_range_db: Optional[int] = None,
+        lower_display_range_db: Optional[int] = None,
         replace: bool = False,
     ):
-        if imageRootFolderPath is None:
-            imageRootFolderPath = self.full_path.parent
-        imageRootFolderPath = Path(imageRootFolderPath)
-        imageFolderPath = imageRootFolderPath.joinpath(f"{self.folderName}_b-mode")
+        if image_root_folder_path is None:
+            image_root_folder_path = self.full_path.parent
+        image_root_folder_path = Path(image_root_folder_path)
+        imageFolderPath = image_root_folder_path.joinpath(
+            f"{self.folderName}_b-mode"
+        )
         for f in self.files:
             pgmFile = PGMFile(f, printOut=False)
             pgmFile.saveBMode(
                 imageFolderPath,
-                upperDisplayRangeDb=upperDisplayRangeDb,
-                lowerDisplayRangeDb=lowerDisplayRangeDb,
+                upperDisplayRangeDb=upper_display_range_db,
+                lowerDisplayRangeDb=lower_display_range_db,
                 replace=replace,
             )
 
 
 class ParentFolderTagMg(FolderTagMg):
     """
-    A Child Class of folderMgBase to manage all the pgm Folder, functions include:
+    A Child Class of folderMgBase to manage all the pgm Folder,
+    functions include:
         - all parent functions
         - list all the dirs
         - return any folder as pgmFolderMg in the list given index of the list
     """
 
-    def __init__(self, fullPath: STR_OR_PATH, tags: Optional[STR_OR_LIST] = None):
+    def __init__(
+        self, full_path: STR_OR_PATH, tags: Optional[STR_OR_LIST] = None
+    ):
         if tags is None:
             tags = []
-        super().__init__(fullPath, tags)
+        super().__init__(full_path, tags)
 
     def createNewFolderList(self, folders: STR_OR_LIST):
         # remove all the folders, and refill with new ones
@@ -109,7 +125,8 @@ class ParentFolderTagMg(FolderTagMg):
 
     def ls(self):
         print(
-            f"\nCurrent Folder '{self.folderName}' contains {len(self.dirs)}, which are:"
+            f"\nCurrent Folder '{self.folderName}' contains {len(self.dirs)}, "
+            f"which are:"
         )
         for d in self.dirs:
             print(f"  - {d.name}")
@@ -131,9 +148,9 @@ class PgmFolderTagMg(FolderMgBase):
         if folders is None:
             folders = []
         super().__init__()
-        self.folderList: Dict[
-            Path, PgmFolder
-        ] = dict()  # key = path, value = store the folderMgBase type of folders
+        self.folderList: Dict[Path, PgmFolder] = (
+            dict()
+        )  # key = path, value = store the folderMgBase type of folders
         self.tagGroup: Dict[str, list[PgmFolder]] = dict()
         folders = self._path_to_list(folders)
         for fd in folders:
@@ -183,7 +200,9 @@ class PgmFolderTagMg(FolderMgBase):
             if not resultGroup:
                 print(f"No common folder found.")
                 return []
-            resultGroup = resultGroup.intersection(self.tagGroup[tags[ithTag + 1]])
+            resultGroup = resultGroup.intersection(
+                self.tagGroup[tags[ithTag + 1]]
+            )
         return list(resultGroup)
 
     def lsByTag(self, tag: str) -> None:
