@@ -69,7 +69,7 @@ class DH:
     def update_alpha(self, alpha) -> None:
         self.alpha = alpha
 
-    def update(self, d, theta, a, alpha) -> Node:
+    def update(self, d, theta, a, alpha) -> None:
         self.d = d
         self.theta = theta
         self.a = a

@@ -70,7 +70,7 @@ class Link2D(DH):
     def _plot_start_point(self, ax: plt.Axes, color="black", markersize=5) -> plt.Axes:
         ax.plot(self.x, self.y, "o", color=color, markersize=markersize)
         if self.name != "":
-            ax.annotate(
+            label = ax.annotate(
                 self.name,
                 (self.x, self.y),
                 color="black",

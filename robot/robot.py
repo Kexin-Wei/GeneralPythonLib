@@ -167,11 +167,23 @@ class Robot2D(KinematicChain):
             fig, ax = plt.subplots()
             ax.set_aspect("equal")
             ax.grid()
-        for joint, c in zip(self.joints, self.colors):
+        joint_ends = np.zeros((len(self.joints) * 2, 2))
+        for i, (joint, c) in enumerate(zip(self.joints, self.colors)):
             if joint in self.parallel_joints:
                 self._plot_parallel_joint(ax, joint, color=c)
             else:
                 joint.plot(ax, color=c)
+                joint_ends[i * 2] = [joint.x, joint.y]
+                joint_ends[i * 2 + 1] = [joint.xn, joint.yn]
+        x_min, x_max = joint_ends[:, 0].min(), joint_ends[:, 0].max()
+        y_min, y_max = joint_ends[:, 1].min(), joint_ends[:, 1].max()
+        x_range, y_range = x_max - x_min, y_max - y_min
+        if x_range == 0:
+            x_range = 5
+        ax.set_xlim(x_min - x_range * 0.2, x_max + x_range * 0.2)
+        if y_range == 0:
+            y_range = 5
+        ax.set_ylim(y_min - y_range * 0.2, y_max + y_range * 0.2)
         if show_fig:
             plt.show()
         return ax
