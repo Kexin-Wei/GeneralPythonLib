@@ -58,8 +58,8 @@ class Quaternion:
     def cross(self, other: "Quaternion") -> "Quaternion":
         q10, q20 = self.v[0], other.v[0]
         q1vec, q2vec = self.v[1:], other.v[1:]
-        rvec = q10 * q2vec + q20 * q1vec + np.cross(q1vec, q2vec)
-        return Quaternion(np.hstack([0, rvec]))
+        r_vec = q10 * q2vec + q20 * q1vec + np.cross(q1vec, q2vec)
+        return Quaternion(np.hstack([0, r_vec]))
 
     def as_pure(self) -> "Quaternion":
         return Quaternion(np.hstack([0, self.v[1:]]))
@@ -197,7 +197,9 @@ class DualQuaternion:
         return DualQuaternion(np.hstack([r.v, d.v]))
 
     def pure(self) -> "DualQuaternion":
-        return DualQuaternion(np.hstack([self.real.as_pure().v, self.dual.as_pure().v]))
+        return DualQuaternion(
+            np.hstack([self.real.as_pure().v, self.dual.as_pure().v])
+        )
 
     def norm(self) -> DualNumber:
         norm = self * self.conjugate()
@@ -221,7 +223,9 @@ class DualQuaternion:
         return DualQuaternion(np.hstack([0, v, np.zeros((4,))]))
 
     @staticmethod
-    def from_quaternion_vector(qYX: Quaternion, tYX_X: np.ndarray) -> "DualQuaternion":
+    def from_quaternion_vector(
+        qYX: Quaternion, tYX_X: np.ndarray
+    ) -> "DualQuaternion":
         """build a dual quaternion from quaternion and translation vector
         Args:
             qYX (Quaternion): quaternion, or translation, ep. from reference frame D to B = qBD
@@ -257,11 +261,12 @@ class DualQuaternion:
         """displace a dual quaternion rYX_X by dqYX to get rYX_Y
         Args:
             rYX_X (DualQuaternion): dual quaternion of rYX_X
-        
+
         Returns:
             DualQuaternion: rYX_Y
         """
         return self.conjugate() * rYX_X * self
+
 
 if __name__ == "__main__":
     a = Quaternion(np.array([1, 2, 3, 4]))
@@ -294,4 +299,8 @@ if __name__ == "__main__":
     print(a.pure())
     print(a.norm())
 
-    print(DualQuaternion.from_euler_vector(0, np.array([1, 0, 0]), np.array([1, 0, 0])))
+    print(
+        DualQuaternion.from_euler_vector(
+            0, np.array([1, 0, 0]), np.array([1, 0, 0])
+        )
+    )

@@ -13,6 +13,7 @@ class DH {
     +alpha: float - Radian
     +dim: DimType
     +T: sympy.Matrix
+    -__init__(d: float, theta: float, a: float, alpha: float, calcType: DimType)
     +update_d(d: float)
     +update_theta(theta: float)
     +update_a(a: float)
@@ -26,13 +27,34 @@ class Node {
     +parent: set()
     +child: set()
     +node_name: str
+    -__init__(node_name: str, parent_name: str, child_name: str)
     +add_parent(parent: Node)
     +add_child(child: Node)
     +remove_parent(parent: Node)
     +remove_child(child: Node)
 }
 
-class ReferenceFrame  {
+class KinematicChain {
+    +nodes: list[Node]
+    +base_name: str = "BASE"
+    +base_node: Node(self.base_name, self.base_name, None)
+    +node_names: list[str] <<property>>
+    +add_node(node: Node, parent: Node, child: Node = None)
+    +remove_node(node: Node)
+    #_check_node_name_exist(node_name: str): bool
+    #_check_node_and_parent_when_edit_node(node_name: str, parent_name: str): bool
+    +get_node(node_name: str): Node
+    +add_parent_connection(node: Node, parent: Node)
+    +add_child_connection(node: Node, child: Node)
+    +remove_parent_connection(node: Node, parent: Node)
+    +remove_child_connection(node: Node, child: Node)
+    +get_node_link_from_child_to_end(node: Node): list
+    +get_structure(): list
+}
+
+KinematicChain --> Node
+
+class ReferenceFrame <<Node>>  {
     +r: float - Meter, displacement
     +v: float - Meter/Second, linear velocity
     +w: float - Radian/Second, angular velocity
@@ -40,6 +62,7 @@ class ReferenceFrame  {
     +dq: DualQuaternion - displacement and rotation
     +rdq: DualQuaternion - for computation
     +wdq: DualQuaternion - for computation
+    -__init__(displacement: np.ndarray, linear_velocity: np.ndarray, angular_velocity: np.ndarray, linear_acceleration: np.ndarray, angular_acceleration: np.ndarray, rotation: Quaternion)
     +add_as_pure_quaternion(vec: sympy.Matrix(3, 1))
     +swap()
 }
@@ -51,7 +74,8 @@ ReferenceFrame --> DualQuaternion
 
 class Quaternion{
     +v: sympy.Matrix - 4d vector
-    +vec: sympy.Matrix - v[1:4]
+    +vec: sympy.Matrix - v[1:4] <<property>>
+    -__init__(v: np.ndarray)
     +print()
     +__add__(other: Quaternion)
     +__sub__(other: Quaternion)
@@ -62,6 +86,7 @@ class Quaternion{
     +norm()
     +unit() // normalize
     +cross(other: Quaternion)
+    +as_pure()
     +rotate(rBA_X: Quaternion) // via qYX to rBA_Y
     +from_euler(theta: float, n: sympy.Matrix(3, 1))
     +from_pure(vec: sympy.Matrix(3, 1))
@@ -72,6 +97,7 @@ class DualQuaternion{
     +v: sympy.Matrix - 8d vector
     +real: Quaternion - v[0:4]
     +dual: Quaternion - v[4:8]
+    -__init__(v: np.ndarray)
     +print()
     +__add__(other: DualQuaternion)
     +__sub__(other: DualQuaternion)
@@ -89,4 +115,45 @@ class DualQuaternion{
     +from_real_quaternion(q: Quaternion)
     +from_euler_vector(theta: float, n: sympy.Matrix(3, 1), t: sympy.Matrix(3, 1))
 }
+
+enum RadOrDeg {
+    RADIAN
+    DEGREE
+}
+
+class Link2D <<DH>>{
+    +x: float - Meter
+    +y: float - Meter
+    +name: str
+    +radian: RadOrDeg
+    +l: float - Meter <<property>>
+    +xn: float - Meter <<property>>
+    +yn: float - Meter <<property>>
+    -__init__(x: float, y: float, l: float, theta: float, name: str, rad: RadOrDeg)
+    +new_l(l: float)
+    +new_theta(theta: float)
+    +new_name(name: str)
+    #_plot_start_point(ax: matplotlib.pyplot.Axes, color: str="black", markersize: int=5): plt.Axes
+    #_plot_end_point(ax: matplotlib.pyplot.Axes, color: str="black"): plt.Axes
+    #_plot_link(ax: matplotlib.pyplot.Axes, color: str="black": plt.Axes
+    +plot(ax: matplotlib.pyplot.Axes, color: str="black"): plt.Axes
+}
+Link2D --|> DH
+Link2D --> RadOrDeg
+
+enum JointType {
+    REVOLUTE
+    PRISMATIC
+    FIXED
+}
+
+class Joint2D <<Lind2D, Node>> {
+    +j_type: JointType
+    +j_range: tuple
+    -__init__(j_type: JointType, x: float, y: float, theta: float, l: float, name: str, j_range: tuple, rad: RadOrDeg, parent_name: str, child_name: str)
+    +append_joint(j_type: JointType, theta: float, l: float, name: str, j_range: tuple, rad: RadOrDeg)
+}
+
+Joint2D --|> Link2D
+Joint2D --|> Node
 @enduml

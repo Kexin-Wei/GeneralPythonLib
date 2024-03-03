@@ -3,14 +3,14 @@ import numpy as np
 from enum import Enum
 
 from typing import Tuple
-from .reference_frame import DH, Dimension
+from .reference_frame import DH, Dimension, Node
 
 LINK2D_PAIR = Tuple["Link2D", "Link2D"]
 
 
-class JointType(Enum):
-    revolute = "revolute"
-    prismatic = "prismatic"
+class RadOrDeg(Enum):
+    RADIAN = "radian"
+    DEGREE = "degree"
 
 
 class Link2D(DH):
@@ -35,15 +35,16 @@ class Link2D(DH):
         theta: float = 0,
         l: float = 1,
         name: str = "",
-        rad: bool = False,
+        rad: RadOrDeg = RadOrDeg.RADIAN,
     ) -> None:
         super().__init__(0, theta, l, 0, Dimension.two)
         self.x = x
         self.y = y
         self.name = name
-        if rad:
+        self.rad = rad
+        if rad == RadOrDeg.RADIAN:
             self.new_theta(theta)
-        else:
+        else:  # rad == RadOrDeg.deg
             self.new_theta(np.deg2rad(theta))
 
     @property
@@ -64,13 +65,18 @@ class Link2D(DH):
     def new_theta(self, theta: float) -> None:
         self.update_theta(theta)
 
-    def new_label(self, label: str) -> None:
-        self.name = label
+    def new_name(self, name: str) -> None:
+        self.name = name
 
-    def _plot_start_point(self, ax: plt.Axes, color="black", markersize=5) -> plt.Axes:
+    def _plot_start_point(
+        self,
+        ax: plt.Axes,
+        color="black",
+        markersize: float = 5,
+    ) -> plt.Axes:
         ax.plot(self.x, self.y, "o", color=color, markersize=markersize)
         if self.name != "":
-            label = ax.annotate(
+            ax.annotate(
                 self.name,
                 (self.x, self.y),
                 color="black",
@@ -96,7 +102,12 @@ class Link2D(DH):
         return ax
 
 
-class Joint2D(Link2D):
+class JointType(Enum):
+    REVOLUTE = "revolute"
+    PRISMATIC = "prismatic"
+
+
+class Joint2D(Link2D, Node):
     """all joints must have a link attached to it"""
 
     def __init__(
@@ -108,9 +119,12 @@ class Joint2D(Link2D):
         l: float = 1,
         name: str = "",
         j_range: tuple = (0, np.pi),
-        rad: bool = False,
+        rad: RadOrDeg = RadOrDeg.RADIAN,
+        parent: str = None,
+        child: str = None,
     ) -> None:
-        super().__init__(x, y, theta, l, name, rad)
+        Link2D.__init__(self, x, y, theta, l, name, rad)
+        Node.__init__(self, name, parent, child)
         self.j_type = j_type
         self.j_range = j_range
 
@@ -121,8 +135,21 @@ class Joint2D(Link2D):
         l: float,
         name: str = "",
         j_range: tuple = (0, np.pi),
+        rad: RadOrDeg = RadOrDeg.RADIAN,
     ) -> "Joint2D":
-        return Joint2D(j_type, self.xn, self.yn, theta, l, name, j_range)
+        child = Joint2D(
+            j_type,
+            self.xn,
+            self.yn,
+            theta,
+            l,
+            name,
+            j_range,
+            rad,
+            parent=self.name,
+        )
+        self.add_child(child.name)
+        return child
 
     def plot(self, ax: plt.Axes, color="red") -> plt.Axes:
         ax = self._plot_start_point(ax, color=color, markersize=25)
@@ -131,9 +158,9 @@ class Joint2D(Link2D):
         return ax
 
     def new_joint_value(self, j_value: float) -> None:
-        if self.j_type == JointType.revolute:
+        if self.j_type == JointType.REVOLUTE:
             self.new_theta(j_value)
-        elif self.j_type == JointType.prismatic:
+        elif self.j_type == JointType.PRISMATIC:
             self.new_l(j_value)
 
     def new_joint_range(self, j_range: tuple) -> None:

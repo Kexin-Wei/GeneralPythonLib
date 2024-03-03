@@ -16,7 +16,8 @@ class DH:
     theta: angle from the previous z axis to the next z axis
     a: distance from the previous x axis to the next x axis
     alpha: angle from the previous x axis to the next x axis
-    follow wiki: https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters
+    follow wiki:
+    https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters
     """
 
     def __init__(
@@ -25,13 +26,13 @@ class DH:
         theta: float,
         a: float,
         alpha: float,
-        calcType: Dimension = Dimension.three,
+        calc_type: Dimension = Dimension.three,
     ) -> None:
         self.d = d
         self.theta = theta
         self.a = a
         self.alpha = alpha
-        self.dim = calcType
+        self.dim = calc_type
         if self.dim == Dimension.two:
             self.d = 0
             self.alpha = 0
@@ -78,71 +79,67 @@ class DH:
 
 class Node:
     def __init__(
-        self, node_name: str, parent_name: str, child_name: str = None
+        self, node_name: str, parent: "Node" = None, child: "Node" = None
     ) -> None:
         """_
         Args:
             node_name (str): unique name in the chain, should be set as joint name
-            parent_id (int):  parent node id
-            child_id (int, optional): _description_. Defaults to None.
+            parent (int):  parent node id
+            child (int, optional): _description_. Defaults to None.
         """
         self.parent: set[str] = None
         self.child: set[str] = None
-        self.node_name: str = node_name
-        self.add_parent(parent_name)
-        self.add_child(child_name)
+        self.name: str = node_name
+        if parent is not None:
+            self.add_parent(parent)
+        if child is not None:
+            self.add_child(child)
 
-    def add_parent(self, parent_name: str) -> None:
-        assert (
-            parent_name is not None
-        ), f"Parent name cannot be None, node {self.node_name} add parent failed."
-        if self.parent is None:
-            self.parent = set([])
-            self.parent.add(parent_name)
-            return
-        if parent_name in self.parent:
-            warnings.warn(
-                f"Parent name {parent_name} already exist in node {self.node_name}, ignored."
-            )
-            return
-        self.parent.add(parent_name)
+    def _edit_relationship(
+        self,
+        relationship_node: "Node",
+        is_parent: bool = True,
+        is_add: bool = True,
+    ) -> None:
+        if is_parent:
+            relationship_set = self.parent
+        else:
+            relationship_set = self.child
+        if relationship_set is None:
+            relationship_set = set([])
+        else:
+            if is_add and relationship_node in relationship_set:
+                warnings.warn(
+                    f"Relationship name {relationship_node} "
+                    f"already exist in node {self.name}, ignored."
+                )
+                return
+            if not is_add and relationship_node not in relationship_set:
+                warnings.warn(
+                    f"Relationship name {relationship_node} "
+                    f"does not exist in node {self.name}, ignored."
+                )
+                return
+        if is_add:
+            relationship_set.add(relationship_node)
+        else:
+            relationship_set.remove(relationship_node)
+        if is_parent:
+            self.parent = relationship_set
+        else:
+            self.child = relationship_set
 
-    def add_child(self, child_name: str) -> None:
-        if child_name is None:
-            return
-        if self.child is None:
-            self.child = set([])
-            self.child.add(child_name)
-            return
-        if child_name in self.child:
-            warnings.warn(
-                f"Child name {child_name} already exist in node {self.node_name}, ignored."
-            )
-            return
-        self.child.add(child_name)
+    def add_parent(self, parent: "Node") -> None:
+        self._edit_relationship(parent, is_parent=True, is_add=True)
 
-    def remove_parent(self, parent_name: str) -> None:
-        assert parent_name is not None, "Parent name cannot be None."
-        if parent_name not in self.parent:
-            warnings.warn(
-                f"Parent name {parent_name} does not exist in node {self.node_name}, "
-                f"remove parent failed."
-            )
-            return
-        self.parent.remove(parent_name)
+    def add_child(self, child: "Node") -> None:
+        self._edit_relationship(child, is_parent=False, is_add=True)
 
-    def remove_child(self, child_name: str) -> None:
-        if child_name is None:
-            warnings.warn(
-                f"Child name is None, node {self.node_name} remove child failed."
-            )
-            return
-        if child_name not in self.child:
-            warnings.warn(
-                f"Child name {child_name} does not exist in node {self.node_name}, ignored."
-            )
-            return
-        self.child.remove(child_name)
+    def remove_parent(self, parent: "Node") -> None:
+        self._edit_relationship(parent, is_parent=True, is_add=False)
+
+    def remove_child(self, child: "Node") -> None:
+        self._edit_relationship(child, is_parent=False, is_add=False)
 
 
 class DualQuaternionReferenceFrame:
@@ -169,13 +166,19 @@ class DualQuaternionReferenceFrame:
         rotation: Quaternion,
     ) -> None:
         assert displacement.shape == (3,), "Displacement must be a 3D vector."
-        assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
-        assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."
+        assert linear_velocity.shape == (
+            3,
+        ), "Linear velocity must be a 3D vector."
+        assert angular_velocity.shape == (
+            3,
+        ), "Angular velocity must be a 3D vector."
         self.r: Quaternion = self.add_as_pure_quaternion(displacement)
         self.v: Quaternion = self.add_as_pure_quaternion(linear_velocity)
         self.w: Quaternion = self.add_as_pure_quaternion(angular_velocity)
         self.a: Quaternion = self.add_as_pure_quaternion(linear_acceleration)
-        self.alpha: Quaternion = self.add_as_pure_quaternion(angular_acceleration)
+        self.alpha: Quaternion = self.add_as_pure_quaternion(
+            angular_acceleration
+        )
         self.q: Quaternion = rotation
 
         self.dq: DualQuaternion = DualQuaternion.from_quaternion_vector(
@@ -185,7 +188,8 @@ class DualQuaternionReferenceFrame:
         wdq_d = self.v + self.r.cross(self.w)
         self.wdq: DualQuaternion = DualQuaternion.from_real_dual(self.w, wdq_d)
 
-    def add_as_pure_quaternion(self, vec: np.ndarray) -> Quaternion:
+    @staticmethod
+    def add_as_pure_quaternion(vec: np.ndarray) -> Quaternion:
         assert vec.shape == (3,), "Vector must be a 3D vector."
         return Quaternion(np.hstack([0, vec]))
 
@@ -215,13 +219,19 @@ class DualQuaternionReferenceFrame:
         rotation: Quaternion,
     ) -> None:
         assert displacement.shape == (3,), "Displacement must be a 3D vector."
-        assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
-        assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."
+        assert linear_velocity.shape == (
+            3,
+        ), "Linear velocity must be a 3D vector."
+        assert angular_velocity.shape == (
+            3,
+        ), "Angular velocity must be a 3D vector."
         self.r: Quaternion = self.add_as_pure_quaternion(displacement)
         self.v: Quaternion = self.add_as_pure_quaternion(linear_velocity)
         self.w: Quaternion = self.add_as_pure_quaternion(angular_velocity)
         self.a: Quaternion = self.add_as_pure_quaternion(linear_acceleration)
-        self.alpha: Quaternion = self.add_as_pure_quaternion(angular_acceleration)
+        self.alpha: Quaternion = self.add_as_pure_quaternion(
+            angular_acceleration
+        )
         self.q: Quaternion = rotation
 
         self.dq: DualQuaternion = DualQuaternion.from_quaternion_vector(
