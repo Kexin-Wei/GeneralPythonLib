@@ -1,6 +1,6 @@
-import warnings
-import numpy as np
 from enum import Enum
+
+import numpy as np
 
 from .quaternion import Quaternion, DualQuaternion
 
@@ -21,12 +21,12 @@ class DH:
     """
 
     def __init__(
-        self,
-        d: float,
-        theta: float,
-        a: float,
-        alpha: float,
-        calc_type: Dimension = Dimension.three,
+            self,
+            d: float,
+            theta: float,
+            a: float,
+            alpha: float,
+            calc_type: Dimension = Dimension.three,
     ) -> None:
         self.d = d
         self.theta = theta
@@ -77,71 +77,6 @@ class DH:
         self.alpha = alpha
 
 
-class Node:
-    def __init__(
-        self, node_name: str, parent: "Node" = None, child: "Node" = None
-    ) -> None:
-        """_
-        Args:
-            node_name (str): unique name in the chain, should be set as joint name
-            parent (int):  parent node id
-            child (int, optional): _description_. Defaults to None.
-        """
-        self.parent: set[str] = None
-        self.child: set[str] = None
-        self.name: str = node_name
-        if parent is not None:
-            self.add_parent(parent)
-        if child is not None:
-            self.add_child(child)
-
-    def _edit_relationship(
-        self,
-        relationship_node: "Node",
-        is_parent: bool = True,
-        is_add: bool = True,
-    ) -> None:
-        if is_parent:
-            relationship_set = self.parent
-        else:
-            relationship_set = self.child
-        if relationship_set is None:
-            relationship_set = set([])
-        else:
-            if is_add and relationship_node in relationship_set:
-                warnings.warn(
-                    f"Relationship name {relationship_node} "
-                    f"already exist in node {self.name}, ignored."
-                )
-                return
-            if not is_add and relationship_node not in relationship_set:
-                warnings.warn(
-                    f"Relationship name {relationship_node} "
-                    f"does not exist in node {self.name}, ignored."
-                )
-                return
-        if is_add:
-            relationship_set.add(relationship_node)
-        else:
-            relationship_set.remove(relationship_node)
-        if is_parent:
-            self.parent = relationship_set
-        else:
-            self.child = relationship_set
-
-    def add_parent(self, parent: "Node") -> None:
-        self._edit_relationship(parent, is_parent=True, is_add=True)
-
-    def add_child(self, child: "Node") -> None:
-        self._edit_relationship(child, is_parent=False, is_add=True)
-
-    def remove_parent(self, parent: "Node") -> None:
-        self._edit_relationship(parent, is_parent=True, is_add=False)
-
-    def remove_child(self, child: "Node") -> None:
-        self._edit_relationship(child, is_parent=False, is_add=False)
-
-
 class DualQuaternionReferenceFrame:
     """
     define a Reference Frame Y respect to frame X (parent) using dual quaternion
@@ -157,28 +92,22 @@ class DualQuaternionReferenceFrame:
     """
 
     def __init__(
-        self,
-        displacement: np.ndarray,
-        linear_velocity: np.ndarray,
-        angular_velocity: np.ndarray,
-        linear_acceleration: np.ndarray,
-        angular_acceleration: np.ndarray,
-        rotation: Quaternion,
+            self,
+            displacement: np.ndarray,
+            linear_velocity: np.ndarray,
+            angular_velocity: np.ndarray,
+            linear_acceleration: np.ndarray,
+            angular_acceleration: np.ndarray,
+            rotation: Quaternion,
     ) -> None:
         assert displacement.shape == (3,), "Displacement must be a 3D vector."
-        assert linear_velocity.shape == (
-            3,
-        ), "Linear velocity must be a 3D vector."
-        assert angular_velocity.shape == (
-            3,
-        ), "Angular velocity must be a 3D vector."
+        assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
+        assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."
         self.r: Quaternion = self.add_as_pure_quaternion(displacement)
         self.v: Quaternion = self.add_as_pure_quaternion(linear_velocity)
         self.w: Quaternion = self.add_as_pure_quaternion(angular_velocity)
         self.a: Quaternion = self.add_as_pure_quaternion(linear_acceleration)
-        self.alpha: Quaternion = self.add_as_pure_quaternion(
-            angular_acceleration
-        )
+        self.alpha: Quaternion = self.add_as_pure_quaternion(angular_acceleration)
         self.q: Quaternion = rotation
 
         self.dq: DualQuaternion = DualQuaternion.from_quaternion_vector(
@@ -210,28 +139,22 @@ class DualQuaternionReferenceFrame:
         )
 
     def update(
-        self,
-        displacement: np.ndarray,
-        linear_velocity: np.ndarray,
-        angular_velocity: np.ndarray,
-        linear_acceleration: np.ndarray,
-        angular_acceleration: np.ndarray,
-        rotation: Quaternion,
+            self,
+            displacement: np.ndarray,
+            linear_velocity: np.ndarray,
+            angular_velocity: np.ndarray,
+            linear_acceleration: np.ndarray,
+            angular_acceleration: np.ndarray,
+            rotation: Quaternion,
     ) -> None:
         assert displacement.shape == (3,), "Displacement must be a 3D vector."
-        assert linear_velocity.shape == (
-            3,
-        ), "Linear velocity must be a 3D vector."
-        assert angular_velocity.shape == (
-            3,
-        ), "Angular velocity must be a 3D vector."
+        assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
+        assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."
         self.r: Quaternion = self.add_as_pure_quaternion(displacement)
         self.v: Quaternion = self.add_as_pure_quaternion(linear_velocity)
         self.w: Quaternion = self.add_as_pure_quaternion(angular_velocity)
         self.a: Quaternion = self.add_as_pure_quaternion(linear_acceleration)
-        self.alpha: Quaternion = self.add_as_pure_quaternion(
-            angular_acceleration
-        )
+        self.alpha: Quaternion = self.add_as_pure_quaternion(angular_acceleration)
         self.q: Quaternion = rotation
 
         self.dq: DualQuaternion = DualQuaternion.from_quaternion_vector(

@@ -1,5 +1,69 @@
-from .reference_frame import Node
 import warnings
+
+
+class Node:
+    def __init__(
+            self, node_name: str, parent: "Node" = None, child: "Node" = None
+    ) -> None:
+        """_
+        Args:
+            node_name (str): unique name in the chain, should be set as joint name
+            parent (int):  parent node id
+            child (int, optional): _description_. Defaults to None.
+        """
+        self.parent: set[str] = None
+        self.child: set[str] = None
+        self.name: str = node_name
+        if parent is not None:
+            self.add_parent(parent)
+        if child is not None:
+            self.add_child(child)
+
+    def _edit_relationship(
+            self,
+            relationship_node: "Node",
+            is_parent: bool = True,
+            is_add: bool = True,
+    ) -> None:
+        if is_parent:
+            relationship_set = self.parent
+        else:
+            relationship_set = self.child
+        if relationship_set is None:
+            relationship_set = set([])
+        else:
+            if is_add and relationship_node in relationship_set:
+                warnings.warn(
+                    f"Relationship name {relationship_node} "
+                    f"already exist in node {self.name}, ignored."
+                )
+                return
+            if not is_add and relationship_node not in relationship_set:
+                warnings.warn(
+                    f"Relationship name {relationship_node} "
+                    f"does not exist in node {self.name}, ignored."
+                )
+                return
+        if is_add:
+            relationship_set.add(relationship_node)
+        else:
+            relationship_set.remove(relationship_node)
+        if is_parent:
+            self.parent = relationship_set
+        else:
+            self.child = relationship_set
+
+    def add_parent(self, parent: "Node") -> None:
+        self._edit_relationship(parent, is_parent=True, is_add=True)
+
+    def add_child(self, child: "Node") -> None:
+        self._edit_relationship(child, is_parent=False, is_add=True)
+
+    def remove_parent(self, parent: "Node") -> None:
+        self._edit_relationship(parent, is_parent=True, is_add=False)
+
+    def remove_child(self, child: "Node") -> None:
+        self._edit_relationship(child, is_parent=False, is_add=False)
 
 
 class KinematicChain:
@@ -20,9 +84,9 @@ class KinematicChain:
         return list(self.nodes.keys())
 
     def add_node_to_parent(
-        self,
-        node: Node,
-        parent: Node,
+            self,
+            node: Node,
+            parent: Node,
     ) -> None:
         # if no nodes, parent name must be base name
         if len(self.nodes) == 0:
@@ -35,9 +99,7 @@ class KinematicChain:
                 parent_name = self.base_name
 
         if node.name in self.node_names:
-            warnings.warn(
-                f"Node name {node.name} already exist, add node failed."
-            )
+            warnings.warn(f"Node name {node.name} already exist, add node failed.")
             return
 
         if not self._check_node_name_exist(parent.name):
@@ -51,14 +113,10 @@ class KinematicChain:
 
     def remove_node(self, node: Node):
         if not self._check_node_name_exist(node.name):
-            warnings.warn(
-                f"Node name {node.name} does not exist, remove node failed."
-            )
+            warnings.warn(f"Node name {node.name} does not exist, remove node failed.")
             return
         if node.name == self.base_name:
-            warnings.warn(
-                f"Node name {node.name} is base name, cannot remove base."
-            )
+            warnings.warn(f"Node name {node.name} is base name, cannot remove base.")
             return
 
         # remove child from node
@@ -68,8 +126,7 @@ class KinematicChain:
                     child_node = self.nodes[c]
                 except KeyError:
                     warnings.warn(
-                        f"Child name {c} does not exist, "
-                        f"ignore it and continue"
+                        f"Child name {c} does not exist, " f"ignore it and continue"
                     )
                     continue
                 self.remove_node(child_node)
@@ -81,8 +138,7 @@ class KinematicChain:
                     parent_node = self.nodes[p]
                 except KeyError:
                     warnings.warn(
-                        f"Parent name {p} does not exist, "
-                        f"ignore it and continue"
+                        f"Parent name {p} does not exist, " f"ignore it and continue"
                     )
                     continue
                 parent_node.remove_child(node)
@@ -91,36 +147,26 @@ class KinematicChain:
     def get_node(self, node_name: str) -> Node | None:
         if self._check_node_name_exist(node_name):
             return self.nodes[node_name]
-        warnings.warn(
-            f"Node name does not exist, cannot get node by name {node_name}."
-        )
+        warnings.warn(f"Node name does not exist, cannot get node by name {node_name}.")
         return None
 
     def add_parent_connection(self, node: Node, parent: Node) -> None:
-        if not self._check_node_and_parent_when_edit_node(
-            node.name, parent.name
-        ):
+        if not self._check_node_and_parent_when_edit_node(node.name, parent.name):
             return
         node.add_parent(parent)
 
     def add_child_connection(self, node: Node, child: Node) -> None:
-        if not self._check_node_and_parent_when_edit_node(
-            child.name, node.name
-        ):
+        if not self._check_node_and_parent_when_edit_node(child.name, node.name):
             return
         node.add_child(child)
 
     def remove_parent_connection(self, node: Node, parent: Node) -> None:
-        if not self._check_node_and_parent_when_edit_node(
-            node.name, parent.name
-        ):
+        if not self._check_node_and_parent_when_edit_node(node.name, parent.name):
             return
         node.remove_parent(parent)
 
     def remove_child_connection(self, node: Node, child: Node) -> None:
-        if not self._check_node_and_parent_when_edit_node(
-            child.name, node.name
-        ):
+        if not self._check_node_and_parent_when_edit_node(child.name, node.name):
             return
         node.remove_child(child)
 
@@ -162,7 +208,7 @@ class KinematicChain:
         return node_name in self.node_names
 
     def _check_node_and_parent_when_edit_node(
-        self, node_name: str, parent_name: str
+            self, node_name: str, parent_name: str
     ) -> bool:
         if node_name == self.base_name:
             warnings.warn(
