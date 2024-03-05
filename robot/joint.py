@@ -31,13 +31,13 @@ class Link2D(DH):
     """
 
     def __init__(
-            self,
-            x: float,
-            y: float,
-            theta: float = 0,
-            l: float = 1,
-            name: str = "",
-            rad: RadOrDeg = RadOrDeg.RADIAN,
+        self,
+        x: float,
+        y: float,
+        theta: float = 0,
+        l: float = 1,
+        name: str = "",
+        rad: RadOrDeg = RadOrDeg.DEGREE,
     ) -> None:
         super().__init__(0, theta, l, 0, Dimension.two)
         self.x = x
@@ -71,10 +71,10 @@ class Link2D(DH):
         self.name = name
 
     def _plot_start_point(
-            self,
-            ax: plt.Axes,
-            color="black",
-            markersize: float = 5,
+        self,
+        ax: plt.Axes,
+        color="black",
+        markersize: float = 5,
     ) -> plt.Axes:
         ax.plot(self.x, self.y, "o", color=color, markersize=markersize)
         if self.name != "":
@@ -113,17 +113,17 @@ class Joint2D(Link2D, Node):
     """all joints must have a link attached to it"""
 
     def __init__(
-            self,
-            j_type: JointType,
-            x: float,
-            y: float,
-            theta: float = 0,
-            l: float = 1,
-            name: str = "",
-            j_range: tuple = (0, np.pi),
-            rad: RadOrDeg = RadOrDeg.RADIAN,
-            parent: str = None,
-            child: str = None,
+        self,
+        j_type: JointType,
+        x: float,
+        y: float,
+        theta: float = 0,
+        l: float = 1,
+        name: str = "",
+        j_range: tuple = (0, np.pi),
+        rad: RadOrDeg = RadOrDeg.DEGREE,
+        parent: Node = None,
+        child: Node = None,
     ) -> None:
         Link2D.__init__(self, x, y, theta, l, name, rad)
         Node.__init__(self, name, parent, child)
@@ -131,13 +131,13 @@ class Joint2D(Link2D, Node):
         self.j_range = j_range
 
     def append_joint(
-            self,
-            j_type: JointType,
-            theta: float,
-            l: float,
-            name: str = "",
-            j_range: tuple = (0, np.pi),
-            rad: RadOrDeg = RadOrDeg.RADIAN,
+        self,
+        j_type: JointType,
+        theta: float,
+        l: float,
+        name: str = "",
+        j_range: tuple = (0, np.pi),
+        rad: RadOrDeg = RadOrDeg.RADIAN,
     ) -> "Joint2D":
         child = Joint2D(
             j_type,
@@ -148,9 +148,9 @@ class Joint2D(Link2D, Node):
             name,
             j_range,
             rad,
-            parent=self.name,
+            parent=self,
         )
-        self.add_child(child.name)
+        self.add_child(child)
         return child
 
     def plot(self, ax: plt.Axes, color="red") -> plt.Axes:
@@ -171,5 +171,6 @@ class Joint2D(Link2D, Node):
     def new_pos(self, x, y) -> None:
         self.x = x
         self.y = y
+
 
 # TODO: make LINK2D generalize to LINK3D

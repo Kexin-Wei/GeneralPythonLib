@@ -2,14 +2,14 @@
 # using dh table
 import warnings
 from dataclasses import dataclass
-from typing import Union
+from typing import Union, List
 
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import ndarray
 
 from .joint import Joint2D, JointType, RadOrDeg
-from .kinematic_chain import KinematicChain
+from .kinematic_chain import KinematicChain, Node
 
 
 @dataclass
@@ -32,7 +32,7 @@ class Robot2D(KinematicChain):
         return robot
 
     @property
-    def joints(self) -> list[Joint2D]:
+    def joints(self) -> list[Node]:
         return list(self.joint_name_map.values())
 
     @property
@@ -83,9 +83,11 @@ class Robot2D(KinematicChain):
         joint_range = []
         chain_no_base = chain[1:]
         for j_name in chain_no_base:
-            assert self._check_node_name_exist(
-                j_name
-            ), f"{j_name} does not exist, failed to get joint range."
+            if not self._check_node_name_exist(j_name):
+                warnings.warn(
+                    f"{j_name} does not exist, failed to get joint range."
+                )
+                continue
             joint_range.append(self.joint_name_map[j_name].j_range)
         return joint_range
 
@@ -94,12 +96,14 @@ class Robot2D(KinematicChain):
             return
         if not self._check_node_name_exist(joint.name):
             warnings.warn(
-                f"Joint name {joint.name} does not exist, check joint connection failed."
+                f"Joint name {joint.name} does not exist, "
+                f"check joint connection failed."
             )
             return
         if not self._check_node_name_exist(parent.name):
             warnings.warn(
-                f"Parent name {parent.name} does not exist, check joint connection failed."
+                f"Parent name {parent.name} does not exist, "
+                f"check joint connection failed."
             )
             return
         loc_error = (parent.xn - joint.x) ** 2 + (parent.yn - joint.y) ** 2
@@ -114,10 +118,14 @@ class Robot2D(KinematicChain):
         self.joint_name_map[joint.name] = joint
         self._check_joint_connection(joint, parent)
 
-    def add_joints(self, joints: list[Joint2D], joint_relation: dict = None) -> None:
+    def add_joints(
+        self, joints: list[Joint2D], joint_relation: dict = None
+    ) -> None:
         for i, j in enumerate(joints):
             if j.name in self.joint_name_map.keys():
-                warnings.warn(f"Joint name {j.name} already exist, add joint failed.")
+                warnings.warn(
+                    f"Joint name {j.name} already exist, " f"add joint failed."
+                )
                 continue
 
             if joint_relation is not None:
@@ -135,43 +143,47 @@ class Robot2D(KinematicChain):
                 parent = self.base
             self.add_joint(j, parent)
 
-    def add_parallel_joint(
+    def add_parallel_joint_connection(
         self,
-        joint_name: str,
-        parent_name: str,
+        joint: Joint2D,
+        parent: Joint2D,
         add_joint_loc: Union[Point, list[float]],
         add_joint_type: JointType.REVOLUTE,
     ) -> None:
-        assert self._check_node_name_exist(joint_name), (
-            f"Node name {joint_name} does not exist, "
-            f"add parallel joint to {parent_name} failed."
-        )
-        assert self._check_node_name_exist(parent_name), (
-            f"Parent name {parent_name} does not exist, "
-            f"add parent to node {joint_name} failed."
-        )
+
+        if not self._check_node_name_exist(joint.name):
+            warnings.warn(
+                f"Node name {joint.name} does not exist, "
+                f"add parallel joint to {parent.name} failed."
+            )
+        if not self._check_node_name_exist(parent.name):
+            warnings.warn(
+                f"Parent name {parent.name} does not exist, "
+                f"add parent to node {joint.name} failed."
+            )
         if isinstance(add_joint_loc, Point):
             x = add_joint_loc.x
             y = add_joint_loc.y
-        elif isinstance(add_joint_loc, list):
-            assert len(add_joint_loc) >= 2, (
-                f"Add joint location {add_joint_loc} is not valid, "
-                f"add parallel joint to {parent_name} failed."
-            )
+        else:  # isinstance(add_joint_loc, list):
+            if not len(add_joint_loc) >= 2:
+                warnings.warn(
+                    f"Add joint location {add_joint_loc} is not valid, "
+                    f"add parallel joint to {parent.name} failed."
+                )
+                return
             x = add_joint_loc[0]
             y = add_joint_loc[1]
-        new_knot = Joint2D(add_joint_type, x, y, name=f"{joint_name}_{parent_name}")
-        self.add_joint(new_knot, joint_name)
-        self.add_parent_connection(new_knot.name, parent_name)
+        new_knot = Joint2D(
+            add_joint_type, x, y, name=f"{joint.name}_{parent.name}"
+        )
+        self.add_joint(new_knot, joint)
+        self.add_parent_connection(new_knot, parent)
         self.parallel_joint_name_map[new_knot.name] = new_knot
 
-    def check_joint_parents_connection(self, joint_name: str) -> None:
-        j = self.joint_name_map[joint_name]
-        parent_names = self.nodes[joint_name].parent
-        for parent_name in parent_names:
-            self._check_joint_connection(joint_name, parent_name)
-
-    def _plot_parallel_joint(self, ax: plt.Axes, joint: Joint2D, color="black") -> None:
+    @staticmethod
+    def _plot_parallel_joint(
+        ax: plt.Axes, joint: Joint2D, color="black"
+    ) -> None:
         ax.plot(joint.x, joint.y, "h", color=color, markersize=25)
         if joint.name != "":
             ax.annotate(
@@ -191,6 +203,8 @@ class Robot2D(KinematicChain):
             ax.grid()
         joint_ends = np.zeros((len(self.joints) * 2, 2))
         for i, (joint, c) in enumerate(zip(self.joints, self.colors)):
+            if joint.name == self.base_name:
+                continue
             if joint in self.parallel_joints:
                 self._plot_parallel_joint(ax, joint, color=c)
             else:
@@ -241,12 +255,15 @@ class Robot2D(KinematicChain):
         else:  # TODO for parallel robot
             pass
 
-    def sample_j_range(self, j_range: list, n_samples: int) -> np.ndarray:
+    @staticmethod
+    def sample_j_range(j_range: list, n_samples: int) -> np.ndarray:
         j_range = np.array(j_range).swapaxes(0, 1)
         j_samples = np.linspace(j_range[0], j_range[1], n_samples)
         return j_samples
 
-    def workspace_per_chain(self, chain: list[str], n_samples: int = 50) -> np.ndarray:
+    def workspace_per_chain(
+        self, chain: list[str], n_samples: int = 50
+    ) -> np.ndarray:
         j_ranges = self.get_joint_range_per_chain(chain)
         j_samples = self.sample_j_range(j_ranges, n_samples)
         j_samples_stack = np.meshgrid(*j_samples.T)
@@ -257,13 +274,15 @@ class Robot2D(KinematicChain):
         for j_v in j_samples_stack:
             for i, j_name in enumerate(chain_no_base):
                 self.joint_name_map[j_name].new_joint_value(j_v[i])
-                ends.append(self.chain_forward(chain))
+                ends.append(self._chain_forward(chain))
         return np.array(ends)
 
     def workspace(self, n_samples: int = 50) -> np.ndarray:
         ends_by_chain = []
         for chain in self.struct:
-            ends_by_chain.append(self.workspace_per_chain(chain, n_samples=n_samples))
+            ends_by_chain.append(
+                self.workspace_per_chain(chain, n_samples=n_samples)
+            )
         return np.concatenate(ends_by_chain, axis=0)
 
     def plot_workspace(self, ax: plt.Axes = None) -> plt.Axes:
