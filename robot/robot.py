@@ -136,11 +136,11 @@ class Robot2D(KinematicChain):
             self.add_joint(j, parent)
 
     def add_parallel_joint(
-            self,
-            joint_name: str,
-            parent_name: str,
-            add_joint_loc: Union[Point, list[float]],
-            add_joint_type: JointType.REVOLUTE,
+        self,
+        joint_name: str,
+        parent_name: str,
+        add_joint_loc: Union[Point, list[float]],
+        add_joint_type: JointType.REVOLUTE,
     ) -> None:
         assert self._check_node_name_exist(joint_name), (
             f"Node name {joint_name} does not exist, "
@@ -197,14 +197,20 @@ class Robot2D(KinematicChain):
                 joint.plot(ax, color=c)
                 joint_ends[i * 2] = [joint.x, joint.y]
                 joint_ends[i * 2 + 1] = [joint.xn, joint.yn]
-        x_min, x_max = joint_ends[:, 0].min(), joint_ends[:, 0].max()
-        y_min, y_max = joint_ends[:, 1].min(), joint_ends[:, 1].max()
-        x_range, y_range = x_max - x_min, y_max - y_min
+        prev_x_min, prev_x_max = ax.get_xlim()
+        prev_y_min, prev_y_max = ax.get_ylim()
+        rob_x_min, rob_x_max = joint_ends[:, 0].min(), joint_ends[:, 0].max()
+        rob_y_min, rob_y_max = joint_ends[:, 1].min(), joint_ends[:, 1].max()
+        x_range, y_range = rob_x_max - rob_x_min, rob_y_max - rob_y_min
         if x_range == 0:
             x_range = 5
-        ax.set_xlim(x_min - x_range * 0.2, x_max + x_range * 0.2)
         if y_range == 0:
             y_range = 5
+        x_min = min(prev_x_min, rob_x_min)
+        x_max = max(prev_x_max, rob_x_max)
+        y_min = min(prev_y_min, rob_y_min)
+        y_max = max(prev_y_max, rob_y_max)
+        ax.set_xlim(x_min - x_range * 0.2, x_max + x_range * 0.2)
         ax.set_ylim(y_min - y_range * 0.2, y_max + y_range * 0.2)
         if show_fig:
             plt.show()

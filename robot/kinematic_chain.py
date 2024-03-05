@@ -2,8 +2,9 @@ import warnings
 
 
 class Node:
+
     def __init__(
-            self, node_name: str, parent: "Node" = None, child: "Node" = None
+        self, node_name: str, parent: "Node" = None, child: "Node" = None
     ) -> None:
         """_
         Args:
@@ -20,10 +21,10 @@ class Node:
             self.add_child(child)
 
     def _edit_relationship(
-            self,
-            relationship_node: "Node",
-            is_parent: bool = True,
-            is_add: bool = True,
+        self,
+        relationship_node: "Node",
+        is_parent: bool = True,
+        is_add: bool = True,
     ) -> None:
         if is_parent:
             relationship_set = self.parent
@@ -45,9 +46,9 @@ class Node:
                 )
                 return
         if is_add:
-            relationship_set.add(relationship_node)
+            relationship_set.add(relationship_node.name)
         else:
-            relationship_set.remove(relationship_node)
+            relationship_set.remove(relationship_node.name)
         if is_parent:
             self.parent = relationship_set
         else:
@@ -84,13 +85,14 @@ class KinematicChain:
         return list(self.nodes.keys())
 
     def add_node_to_parent(
-            self,
-            node: Node,
-            parent: Node,
+        self,
+        node: Node,
+        parent: Node,
     ) -> None:
+        parent_name = parent.name
         # if no nodes, parent name must be base name
-        if len(self.nodes) == 0:
-            if parent.name != self.base_name:
+        if len(self.nodes) == 1:
+            if parent_name != self.base_name:
                 warnings.warn(
                     f"Node {node.name} is the first node, "
                     f"parent name should be {self.base_name}."
@@ -102,13 +104,13 @@ class KinematicChain:
             warnings.warn(f"Node name {node.name} already exist, add node failed.")
             return
 
-        if not self._check_node_name_exist(parent.name):
+        if not self._check_node_name_exist(parent_name):
             warnings.warn(
-                f"Parent name {parent.name} does not exist, "
+                f"Parent name {parent_name} does not exist, "
                 f"add node {node.name} failed."
             )
             return
-        self.nodes[parent.name].add_child(node)
+        self.nodes[parent_name].add_child(node)
         self.nodes[node.name] = node
 
     def remove_node(self, node: Node):
@@ -208,7 +210,7 @@ class KinematicChain:
         return node_name in self.node_names
 
     def _check_node_and_parent_when_edit_node(
-            self, node_name: str, parent_name: str
+        self, node_name: str, parent_name: str
     ) -> bool:
         if node_name == self.base_name:
             warnings.warn(

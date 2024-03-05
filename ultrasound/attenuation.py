@@ -1,9 +1,9 @@
 from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import Optional
 
-# from .rflib_math import findClosestNum, possibleFactor
+import matplotlib.pyplot as plt
+import numpy as np
+
 from ..utils.define_class import (
     AverageMethodType,
     INT_OR_FLOAT,
