@@ -21,13 +21,14 @@ class DH:
     """
 
     def __init__(
-            self,
-            d: float,
-            theta: float,
-            a: float,
-            alpha: float,
-            calc_type: Dimension = Dimension.three,
+        self,
+        d: float,
+        theta: float,
+        a: float,
+        alpha: float,
+        calc_type: Dimension = Dimension.three,
     ) -> None:
+        self._T = None
         self.d = d
         self.theta = theta
         self.a = a
@@ -36,10 +37,10 @@ class DH:
         if self.dim == Dimension.two:
             self.d = 0
             self.alpha = 0
+        self._update()
 
-    @property
-    def T(self) -> np.ndarray:
-        return np.array(
+    def _update(self):
+        self._T = np.array(
             [
                 [
                     np.cos(self.theta),
@@ -58,23 +59,37 @@ class DH:
             ]
         )
 
+    @property
+    def T(self) -> np.ndarray:
+        return self._T
+
     def update_d(self, d) -> None:
         self.d = d
+        self._update()
 
     def update_theta(self, theta) -> None:
         self.theta = theta
+        self._update()
 
     def update_a(self, a) -> None:
         self.a = a
+        self._update()
 
     def update_alpha(self, alpha) -> None:
         self.alpha = alpha
+        self._update()
 
     def update(self, d, theta, a, alpha) -> None:
         self.d = d
         self.theta = theta
         self.a = a
         self.alpha = alpha
+        self._update()
+
+    def update_T(self, T: np.ndarray) -> None:
+        if T.shape != (4, 4):
+            raise ValueError("T must be a 4x4 matrix.")
+        self._T = T
 
 
 class DualQuaternionReferenceFrame:
@@ -92,22 +107,28 @@ class DualQuaternionReferenceFrame:
     """
 
     def __init__(
-            self,
-            displacement: np.ndarray,
-            linear_velocity: np.ndarray,
-            angular_velocity: np.ndarray,
-            linear_acceleration: np.ndarray,
-            angular_acceleration: np.ndarray,
-            rotation: Quaternion,
+        self,
+        displacement: np.ndarray,
+        linear_velocity: np.ndarray,
+        angular_velocity: np.ndarray,
+        linear_acceleration: np.ndarray,
+        angular_acceleration: np.ndarray,
+        rotation: Quaternion,
     ) -> None:
         assert displacement.shape == (3,), "Displacement must be a 3D vector."
-        assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
-        assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."
+        assert linear_velocity.shape == (
+            3,
+        ), "Linear velocity must be a 3D vector."
+        assert angular_velocity.shape == (
+            3,
+        ), "Angular velocity must be a 3D vector."
         self.r: Quaternion = self.add_as_pure_quaternion(displacement)
         self.v: Quaternion = self.add_as_pure_quaternion(linear_velocity)
         self.w: Quaternion = self.add_as_pure_quaternion(angular_velocity)
         self.a: Quaternion = self.add_as_pure_quaternion(linear_acceleration)
-        self.alpha: Quaternion = self.add_as_pure_quaternion(angular_acceleration)
+        self.alpha: Quaternion = self.add_as_pure_quaternion(
+            angular_acceleration
+        )
         self.q: Quaternion = rotation
 
         self.dq: DualQuaternion = DualQuaternion.from_quaternion_vector(
@@ -139,22 +160,28 @@ class DualQuaternionReferenceFrame:
         )
 
     def update(
-            self,
-            displacement: np.ndarray,
-            linear_velocity: np.ndarray,
-            angular_velocity: np.ndarray,
-            linear_acceleration: np.ndarray,
-            angular_acceleration: np.ndarray,
-            rotation: Quaternion,
+        self,
+        displacement: np.ndarray,
+        linear_velocity: np.ndarray,
+        angular_velocity: np.ndarray,
+        linear_acceleration: np.ndarray,
+        angular_acceleration: np.ndarray,
+        rotation: Quaternion,
     ) -> None:
         assert displacement.shape == (3,), "Displacement must be a 3D vector."
-        assert linear_velocity.shape == (3,), "Linear velocity must be a 3D vector."
-        assert angular_velocity.shape == (3,), "Angular velocity must be a 3D vector."
+        assert linear_velocity.shape == (
+            3,
+        ), "Linear velocity must be a 3D vector."
+        assert angular_velocity.shape == (
+            3,
+        ), "Angular velocity must be a 3D vector."
         self.r: Quaternion = self.add_as_pure_quaternion(displacement)
         self.v: Quaternion = self.add_as_pure_quaternion(linear_velocity)
         self.w: Quaternion = self.add_as_pure_quaternion(angular_velocity)
         self.a: Quaternion = self.add_as_pure_quaternion(linear_acceleration)
-        self.alpha: Quaternion = self.add_as_pure_quaternion(angular_acceleration)
+        self.alpha: Quaternion = self.add_as_pure_quaternion(
+            angular_acceleration
+        )
         self.q: Quaternion = rotation
 
         self.dq: DualQuaternion = DualQuaternion.from_quaternion_vector(

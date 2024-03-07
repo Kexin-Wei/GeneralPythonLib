@@ -1,15 +1,14 @@
 # numerical functions for robot kinematics
 # using dh table
 import warnings
-from dataclasses import dataclass
-from typing import Union, List
-
-import matplotlib.pyplot as plt
 import numpy as np
-from numpy import ndarray
+import matplotlib.pyplot as plt
+from dataclasses import dataclass
+from typing import Union
 
 from .joint import Joint2D, JointType, RadOrDeg
 from .kinematic_chain import KinematicChain, Node
+from .reference_frame import DH, Dimension
 
 
 @dataclass
@@ -19,11 +18,66 @@ class Point:
     z: float = 0
 
 
+class EndEffector2D(Node, DH):
+    def __init__(
+        self,
+        theta: float = 0,
+        radian: RadOrDeg = RadOrDeg.DEGREE,
+        name: str = "end_effector",
+    ) -> None:
+        Node.__init__(self, name)
+        DH.__init__(self, 0, theta, 0, 0, Dimension.two)
+        if radian == RadOrDeg.DEGREE:
+            self.update_theta(np.deg2rad(theta))
+
+    def plot(
+        self,
+        ax: plt.Axes = None,
+        scale: float = 5,
+        color: str = "black",
+    ) -> plt.Axes:
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_aspect("equal")
+            ax.grid()
+        x, y, z = self.T[:3, 3]
+        n_x = self.T[:3, 0]
+        n_y = self.T[:3, 1]
+        [dx1, dy1, dz1] = n_x * scale
+        [dx2, dy2, dz2] = n_y * scale
+
+        head_width = 0.2 * scale
+        head_length = 0.2 * scale
+        radius = 0.1 * scale
+        ax.arrow(
+            x,
+            y,
+            dx1,
+            dy1,
+            color="r",
+            head_width=head_width,
+            head_length=head_length,
+        )
+        ax.arrow(
+            x,
+            y,
+            dx2,
+            dy2,
+            color="g",
+            head_width=head_width,
+            head_length=head_length,
+        )
+        cle = plt.Circle((x, y), radius, color=color)
+        ax.add_patch(cle)
+        return ax
+
+
 class Robot2D(KinematicChain):
     def __init__(self) -> None:
         super().__init__()
         self.joint_name_map: dict[str, Joint2D] = {}
         self.parallel_joint_name_map: dict[str, Joint2D] = {}
+        self.end_effector: EndEffector2D = None
 
     @classmethod
     def from_joint_list(cls, joint_list: list[Joint2D]) -> "Robot2D":
@@ -36,7 +90,7 @@ class Robot2D(KinematicChain):
         return list(self.joint_name_map.values())
 
     @property
-    def colors(self) -> ndarray:
+    def colors(self) -> np.ndarray:
         n_joints = len(self.joints)
         cmap = plt.get_cmap("hsv")
         norm = plt.Normalize(vmin=0, vmax=n_joints)
@@ -52,7 +106,7 @@ class Robot2D(KinematicChain):
         return list(self.parallel_joint_name_map.values())
 
     @property
-    def parallel_colors(self) -> ndarray:
+    def parallel_colors(self) -> np.ndarray:
         n_joints = len(self.parallel_joints)
         cmap = plt.get_cmap("tab20")
         norm = plt.Normalize(vmin=0, vmax=n_joints)
@@ -117,6 +171,48 @@ class Robot2D(KinematicChain):
         self.add_node_to_parent(joint, parent)
         self.joint_name_map[joint.name] = joint
         self._check_joint_connection(joint, parent)
+
+    def add_end_effector(
+        self,
+        parent: Joint2D,
+        end_of_link: bool = True,
+        same_orientation: bool = True,
+        relation_matrix: np.ndarray = None,
+    ) -> None:
+        if not self._check_node_name_exist(parent.name):
+            warnings.warn(
+                f"Parent name {parent.name} does not exist, "
+                f"add end effector failed."
+            )
+            return
+
+        T = np.eye(4)
+        if not end_of_link or not same_orientation:
+            if relation_matrix is None or not isinstance(
+                relation_matrix, np.ndarray
+            ):
+                warnings.warn(
+                    f"Relation matrix is not valid"
+                    f"add end effector failed, using same orientation and end of link."
+                )
+                end_of_link = True
+                same_orientation = True
+            elif relation_matrix.shape[0] > 3 or relation_matrix.shape[1] > 3:
+                T = relation_matrix[:4, :4]
+            elif (
+                relation_matrix.shape[0] == 3 and relation_matrix.shape[1] == 3
+            ):
+                T[:2, :2] = relation_matrix[:2, :2]
+                T[:2, 3] = relation_matrix[:2, 2]
+
+        if end_of_link:
+            T[0, 3] = parent.xn
+            T[1, 3] = parent.yn
+        if same_orientation:
+            T[:2, :2] = parent.T[:2, :2]
+        self.end_effector = EndEffector2D(name="end_effector")
+        self.end_effector.update_T(T)
+        self.add_node_to_parent(self.end_effector, parent)
 
     def add_joints(
         self, joints: list[Joint2D], joint_relation: dict = None
@@ -274,15 +370,21 @@ class Robot2D(KinematicChain):
         for j_v in j_samples_stack:
             for i, j_name in enumerate(chain_no_base):
                 self.joint_name_map[j_name].new_joint_value(j_v[i])
-                ends.append(self._chain_forward(chain))
+            ends.append(self._chain_forward(chain_no_base))
         return np.array(ends)
 
-    def workspace(self, n_samples: int = 50) -> np.ndarray:
+    def workspace(
+        self, n_samples: int = 50, end_effector_only: bool = True
+    ) -> np.ndarray:
+        if not end_effector_only:
+            warnings.warn("Only end effector workspace is supported for now.")
+            return None
         ends_by_chain = []
         for chain in self.struct:
-            ends_by_chain.append(
-                self.workspace_per_chain(chain, n_samples=n_samples)
-            )
+            if self.end_effector.name in chain:
+                ends_by_chain = self.workspace_per_chain(
+                    chain, n_samples=n_samples
+                )
         return np.concatenate(ends_by_chain, axis=0)
 
     def plot_workspace(self, ax: plt.Axes = None) -> plt.Axes:
