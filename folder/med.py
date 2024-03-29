@@ -1,9 +1,11 @@
-import SimpleITK as sitk
 from pathlib import Path
 from typing import Sequence, Optional, List, Union
+
+import SimpleITK as sitk
+
 from .basic import FolderMg
-from ..utils.define_class import STR_OR_PATH
 from ..med_image.medical_image import VolumeImage
+from ..utils.define_class import STR_OR_PATH
 
 
 class BaseMedicalImageFolderMg(FolderMg):
@@ -21,11 +23,11 @@ class BaseMedicalImageFolderMg(FolderMg):
         # *.nrrd, *.nhdr
         return self._get_file_path_by_extension_list(["nrrd", "nhdr"])
 
-    def getMetaImagePath(self) -> List[Path]:
+    def get_meta_image_path(self) -> List[Path]:
         # *.mha, *.mhd
         return self._get_file_path_by_extension_list(["mha", "mhd"])
 
-    def getNiftiImagePath(self) -> List[Path]:
+    def get_nifti_image_path(self) -> List[Path]:
         # *.nia, *.nii, *.nii.gz, *.hdr, *.img, *.img.gz
         return self._get_file_path_by_extension_list(
             ["nia", "nii", "nii.gz", "hdr", "img", "img.gz"]
@@ -62,7 +64,7 @@ class MedicalFolderMg(FolderMg):
             dwiList = []
             for f in self.files:
                 if "dwi" in f.name.lower() and (
-                    "mha" in f.suffix or "nrrd" in f.suffix
+                        "mha" in f.suffix or "nrrd" in f.suffix
                 ):
                     dwiList.append(f)
                     print(f)
@@ -74,7 +76,7 @@ class MedicalFolderMg(FolderMg):
             adcList = []
             for f in self.files:
                 if "adc" in f.name.lower() and (
-                    "mha" in f.suffix or "nrrd" in f.suffix
+                        "mha" in f.suffix or "nrrd" in f.suffix
                 ):
                     adcList.append(f)
                     print(f)
