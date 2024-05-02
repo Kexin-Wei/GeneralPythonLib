@@ -5,6 +5,7 @@ Several folder Managers based on folderMeg, including:
 """
 
 import natsort
+import shutil
 import numpy as np
 from pathlib import Path
 from typing import Sequence, Optional, List
@@ -73,6 +74,9 @@ class FolderMgBase:
             files.extend(natsort.natsorted(self.full_path.glob(f"*.{e}")))
         return files
 
+    def reload(self):
+        self._ge_files_dirs()
+
     def get_random_file(self, printOut: bool = True) -> Path:
         if self.files is not None and len(self.files) != 0:
             randomIdx = np.random.randint(low=0, high=len(self.files))
@@ -90,7 +94,7 @@ class FolderMgBase:
             return len(self.files)
 
     @property
-    def nDirs(self) -> Optional[int]:
+    def nDir(self) -> Optional[int]:
         if self.dirs is not None:
             return len(self.dirs)
 
@@ -133,6 +137,10 @@ class FolderMg(FolderMgBase):
                 if len(self.files) > 5:
                     print(f"  - ...")
 
+    def get_file_recursive_by_extension(self, extension: str) -> List[Path]:
+        assert self.full_path is not None
+        return natsort.natsorted(self.full_path.rglob(f"*.{extension}"))
+
     def get_file_group_by_extension(self) -> dict:
         fileGroup = {}
         if self.files is not None:
@@ -143,6 +151,15 @@ class FolderMg(FolderMgBase):
                 else:
                     fileGroup[extension] = [f]
         return fileGroup
+
+    def copy_to(self, destFolder: STR_OR_PATH):
+        destFolder = Path(destFolder)
+        if not destFolder.exists():
+            destFolder.mkdir(parents=True)
+        for f in self.files:
+            shutil.copy2(f, destFolder)
+        for d in self.dirs:
+            shutil.copytree(d, destFolder.joinpath(d.name), dirs_exist_ok=True)
 
 
 class FolderTagMg(FolderMgBase):
