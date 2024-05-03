@@ -4,6 +4,7 @@ import SimpleITK as sitk
 from pathlib import Path
 from dataclasses import dataclass
 from ..utils.define_class import STR_OR_PATH
+from abc import ABC, abstractmethod
 
 
 class VolumeImageInfo:
@@ -36,40 +37,41 @@ class VolumeImageInfo:
     pixelIDValue: int
     pixelIDType: str
     pixelIDTypeAsString: str
-    necessaryTags: dict
-    necessaryTagsValue: list[str] = [
-        "0010|0010",  # Patient Name
-        "0010|0020",  # Patient ID
-        "0010|0030",  # Patient Birth Date
-        "0020|000D",  # Study Instance UID, for machine consumption
-        "0020|0010",  # Study ID, for human consumption
-        "0008|0008",  # Image Type
-        "0008|0020",  # Study Date
-        "0008|0030",  # Study Time
-        "0008|0050",  # Accession Number
-        "0008|0060",  # Modality
-    ]
+    necessaryTagsValue: dict
+    necessaryTags: dict = {
+        "PatientName": "0010|0010",
+        "PatientID": "0010|0020",
+        "PatientBirthDate": "0010|0030",
+        "StudyInstanceUID": "0020|000D",
+        "StudyID": "0020|0010",
+        "ImageType": "0008|0008",
+        "StudyDate": "0008|0020",
+        "StudyTime": "0008|0030",
+        "AccessionNumber": "0008|0050",
+        "Modality": "0008|0060",
+        "SeriesDescription": "0008|103E",
+    }
     path: Path
 
 
-@dataclass(init=False)
-class VolumeImage(VolumeImageInfo):
-    def __init__(self, image: sitk.Image, path: STR_OR_PATH) -> None:
+class VolumeImage(ABC):
+
+    def __init__(self) -> None:
         super().__init__()
-        self.image = image
-        self.dimension = image.GetDimension()
-        self.spacing = image.GetSpacing()
-        self.origin = image.GetOrigin()
-        self.direction = image.GetDirection()
-        self.width = image.GetWidth()
-        self.height = image.GetHeight()
-        self.depth = image.GetDepth()
-        self.pixelIDValue = image.GetPixelIDValue()
-        self.pixelIDType = image.GetPixelIDType()
-        self.pixelIDTypeAsString = image.GetPixelIDTypeAsString()
-        for k in self.necessaryTagsValue:
-            self.necessaryTags[k] = image.GetMetaData(k)
-        self.path = Path(path)
+        self.image = None
+        self.dimension = None
+        self.spacing = None
+        self.origin = None
+        self.direction = None
+        self.width = None
+        self.height = None
+        self.depth = None
+        self.pixelIDValue = None
+        self.pixelIDType = None
+        self.pixelIDTypeAsString = None
+        self.metaData = None
+        self.necessaryTagsValue = None
+        self.path = None
 
     def printOut(self):
         print(f"Image Dimension: {self.dimension}")
@@ -82,9 +84,33 @@ class VolumeImage(VolumeImageInfo):
         print(f"Image PixelIDValue: {self.pixelIDValue}")
         print(f"Image PixelIDType: {self.pixelIDType}")
         print(f"Image PixelIDTypeAsString: {self.pixelIDTypeAsString}")
-        for k in self.necessaryTagsValue:
-            print(f"Image Necessary Tags {k}: {self.necessaryTags[k]}")
+        for k in self.necessaryTagsValue.keys():
+            print(f"Image Necessary Tags {k}: {self.necessaryTagsValue[k]}")
         print(f"Image Path: {self.path}")
+
+
+@dataclass(init=False)
+class VolumeImageITK(VolumeImageInfo, VolumeImage):
+    def __init__(self, image: sitk.Image, path: STR_OR_PATH) -> None:
+        super().__init__()
+        self.image = image
+        self.dimension = image.GetDimension()
+        self.spacing = image.GetSpacing()
+        self.origin = image.GetOrigin()
+        self.direction = image.GetDirection()
+        self.width = image.GetWidth()
+        self.height = image.GetHeight()
+        self.depth = image.GetDepth()
+        self.pixelIDValue = image.GetPixelIDValue()
+        self.pixelIDType = image.GetPixelID()
+        self.pixelIDTypeAsString = image.GetPixelIDTypeAsString()
+        self.metaData = image.GetMetaDataKeys()
+        self.necessaryTagsValue = {}
+        for descprition in self.necessaryTags.keys():
+            tag = self.necessaryTags[descprition]
+            if image.HasMetaDataKey(tag):
+                self.necessaryTagsValue[descprition] = image.GetMetaData(tag)
+        self.path = Path(path)
 
     def writeSlicesToDicom(self, outputPath: STR_OR_PATH):
         if not outputPath.exists():
