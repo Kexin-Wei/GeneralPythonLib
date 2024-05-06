@@ -33,22 +33,19 @@ class VolumeImageInfo:
     width: int
     height: int
     depth: int
-    pixelIDValue: int
-    pixelIDType: str
-    pixelIDTypeAsString: str
     necessaryTagsValue: dict
     necessaryTags: dict = {
-        "PatientName": "0010|0010",
-        "PatientID": "0010|0020",
-        "PatientBirthDate": "0010|0030",
-        "StudyInstanceUID": "0020|000D",
-        "StudyID": "0020|0010",
-        "ImageType": "0008|0008",
-        "StudyDate": "0008|0020",
-        "StudyTime": "0008|0030",
-        "AccessionNumber": "0008|0050",
-        "Modality": "0008|0060",
-        "SeriesDescription": "0008|103E",
+        "0010|0010": "PatientName",
+        "0010|0020": "PatientID",
+        "0010|0030": "PatientBirthDate",
+        "0020|000D": "StudyInstanceUID",
+        "0020|0010": "StudyID",
+        "0008|0008": "ImageType",
+        "0008|0020": "StudyDate",
+        "0008|0030": "StudyTime",
+        "0008|0050": "AccessionNumber",
+        "0008|0060": "Modality",
+        "0008|103e": "SeriesDescription",
     }
 
 
@@ -58,22 +55,19 @@ class VolumeImage(VolumeImageInfo):
         super().__init__()
         self.image = None
         self.path = None
-        self.imgInfo = VolumeImageInfo()
+        self.img_info = VolumeImageInfo()
 
     def printOut(self):
         print(f"Image Path: {self.path}")
-        print(f"Image Dimension: {self.imgInfo.dimension}")
-        print(f"Image Spacing: {self.imgInfo.spacing}")
-        print(f"Image Origin: {self.imgInfo.origin}")
-        print(f"Image Direction: {self.imgInfo.direction}")
-        print(f"Image Width: {self.imgInfo.width}")
-        print(f"Image Height: {self.imgInfo.height}")
-        print(f"Image Depth: {self.imgInfo.depth}")
-        print(f"Image PixelIDValue: {self.imgInfo.pixelIDValue}")
-        print(f"Image PixelIDType: {self.imgInfo.pixelIDType}")
-        print(f"Image PixelIDTypeAsString: {self.imgInfo.pixelIDTypeAsString}")
-        for k in self.imgInfo.necessaryTagsValue.keys():
-            print(f"Image Necessary Tags {k}: {self.imgInfo.necessaryTagsValue[k]}")
+        print(f"Image Dimension: {self.img_info.dimension}")
+        print(f"Image Spacing: {self.img_info.spacing}")
+        print(f"Image Origin: {self.img_info.origin}")
+        print(f"Image Direction: {self.img_info.direction}")
+        print(f"Image Width: {self.img_info.width}")
+        print(f"Image Height: {self.img_info.height}")
+        print(f"Image Depth: {self.img_info.depth}")
+        for k in self.img_info.necessaryTagsValue.keys():
+            print(f"Image Necessary Tags {k}: {self.img_info.necessaryTagsValue[k]}")
 
 
 class VolumeImageITK(VolumeImage):
@@ -94,25 +88,23 @@ class VolumeImageITK(VolumeImage):
         series_reader.LoadPrivateTagsOn()
         self.img = series_reader.Execute()
         self.path = folder_path
-        series_reader.ReadImageInformation()
-        self.imgInfo.dimension = self.img.GetDimension()
-        self.imgInfo.spacing = self.img.GetSpacing()
-        self.imgInfo.origin = self.img.GetOrigin()
-        self.imgInfo.direction = self.img.GetDirection()
-        self.imgInfo.width = self.img.GetWidth()
-        self.imgInfo.height = self.img.GetHeight()
-        self.imgInfo.depth = self.img.GetDepth()
-        self.imgInfo.pixelIDValue = self.img.GetPixelIDValue()
-        self.imgInfo.pixelIDType = self.img.GetPixelIDType()
-        self.imgInfo.pixelIDTypeAsString = self.img.GetPixelIDTypeAsString()
-        self.imgInfo.necessaryTagsValue = {}
+        self.img_info.dimension = self.img.GetDimension()
+        self.img_info.spacing = self.img.GetSpacing()
+        self.img_info.origin = self.img.GetOrigin()
+        self.img_info.direction = self.img.GetDirection()
+        self.img_info.width = self.img.GetWidth()
+        self.img_info.height = self.img.GetHeight()
+        self.img_info.depth = self.img.GetDepth()
+        self.img_info.necessaryTagsValue = {}
         self.metaData = {}
-        for meta_key in series_reader.GetMetaDataKeys():
-            if meta_key in self.imgInfo.necessaryTags.keys():
-                self.imgInfo.necessaryTagsValue[meta_key] = series_reader.GetMetaData(
-                    meta_key
-                )
-            self.metaData[meta_key] = series_reader.GetMetaData(meta_key)
+        for ith_slice in range(self.img.GetDepth()):
+            for meta_key in series_reader.GetMetaDataKeys(ith_slice):
+                if meta_key in self.img_info.necessaryTags.keys():
+                    self.img_info.necessaryTagsValue[self.img_info.necessaryTags[meta_key]] = series_reader.GetMetaData(
+                        ith_slice, meta_key
+                    )
+                self.metaData[meta_key] = series_reader.GetMetaData(ith_slice, meta_key)
+            break # seems first slice is enough
 
     def writeSlicesToDicom(self, outputPath: STR_OR_PATH):
         if not outputPath.exists():
@@ -134,6 +126,11 @@ class VolumeImageITK(VolumeImage):
             sitk.Cast(sitk.RescaleIntensity(self.image), pngFormat),
             [outputPath.joinpath(f"slice{i}.png") for i in range(self.depth)],
         )
+
+    def convertToNiFTI(self, outputPath: STR_OR_PATH):
+        writer = sitk.ImageFileWriter()
+        writer.SetFileName(str(outputPath))
+        writer.Execute(self.image)
 
     def convertImageType(self, newImageType: sitk.Image) -> sitk.Image:
         return sitk.Cast(self.image, newImageType)
