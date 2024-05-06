@@ -91,8 +91,10 @@ class VolumeImage(ABC):
 
 @dataclass(init=False)
 class VolumeImageITK(VolumeImageInfo, VolumeImage):
-    def __init__(self, image: sitk.Image, path: STR_OR_PATH) -> None:
+    def __init__(self) -> None:
         super().__init__()
+    
+    def read(self, reader, image):
         self.image = image
         self.dimension = image.GetDimension()
         self.spacing = image.GetSpacing()
