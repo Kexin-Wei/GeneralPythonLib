@@ -191,7 +191,7 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
             return False
         return True
 
-    def _read_dicom_series(self, folderPath: STR_OR_PATH) -> VolumeImageITK:
+    def _read_dicom_series(self, folder_path: STR_OR_PATH) -> VolumeImageITK:
         """Read dicom series from a folder
 
         Args:
@@ -200,18 +200,11 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
         Returns:
             Sequence[Path]: a list of dicom files
         """
-        if not self._is_a_dicom_series(folderPath):
+        if not self._is_a_dicom_series(folder_path):
             return []
-        series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folderPath))
-        series_file_name = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(
-            str(folderPath), series_IDs[0]
-        )
+
         volumeImg = VolumeImageITK()
-        series_reader = sitk.ImageSeriesReader()
-        series_reader.SetFileNames(series_file_name)
-        series_reader.MetaDataDictionaryArrayUpdateOn()
-        series_reader.LoadPrivateTagsOn()
-        img = series_reader.Execute()
+        volumeImg.read(folder_path)
         return volumeImg
 
     def _is_a_dicom_series(self, folderPath: STR_OR_PATH) -> bool:
