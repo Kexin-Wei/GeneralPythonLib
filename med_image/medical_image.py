@@ -55,19 +55,19 @@ class VolumeImage(VolumeImageInfo):
         super().__init__()
         self.image = None
         self.path = None
-        self.img_info = VolumeImageInfo()
+        self.image_info = VolumeImageInfo()
 
     def printOut(self):
         print(f"Image Path: {self.path}")
-        print(f"Image Dimension: {self.img_info.dimension}")
-        print(f"Image Spacing: {self.img_info.spacing}")
-        print(f"Image Origin: {self.img_info.origin}")
-        print(f"Image Direction: {self.img_info.direction}")
-        print(f"Image Width: {self.img_info.width}")
-        print(f"Image Height: {self.img_info.height}")
-        print(f"Image Depth: {self.img_info.depth}")
-        for k in self.img_info.necessaryTagsValue.keys():
-            print(f"Image Necessary Tags {k}: {self.img_info.necessaryTagsValue[k]}")
+        print(f"Image Dimension: {self.image_info.dimension}")
+        print(f"Image Spacing: {self.image_info.spacing}")
+        print(f"Image Origin: {self.image_info.origin}")
+        print(f"Image Direction: {self.image_info.direction}")
+        print(f"Image Width: {self.image_info.width}")
+        print(f"Image Height: {self.image_info.height}")
+        print(f"Image Depth: {self.image_info.depth}")
+        for k in self.image_info.necessaryTagsValue.keys():
+            print(f"Image Necessary Tags {k}: {self.image_info.necessaryTagsValue[k]}")
 
 
 class VolumeImageITK(VolumeImage):
@@ -86,25 +86,25 @@ class VolumeImageITK(VolumeImage):
         series_reader.SetFileNames(series_file_name)
         series_reader.MetaDataDictionaryArrayUpdateOn()
         series_reader.LoadPrivateTagsOn()
-        self.img = series_reader.Execute()
+        self.image = series_reader.Execute()
         self.path = folder_path
-        self.img_info.dimension = self.img.GetDimension()
-        self.img_info.spacing = self.img.GetSpacing()
-        self.img_info.origin = self.img.GetOrigin()
-        self.img_info.direction = self.img.GetDirection()
-        self.img_info.width = self.img.GetWidth()
-        self.img_info.height = self.img.GetHeight()
-        self.img_info.depth = self.img.GetDepth()
-        self.img_info.necessaryTagsValue = {}
+        self.image_info.dimension = self.image.GetDimension()
+        self.image_info.spacing = self.image.GetSpacing()
+        self.image_info.origin = self.image.GetOrigin()
+        self.image_info.direction = self.image.GetDirection()
+        self.image_info.width = self.image.GetWidth()
+        self.image_info.height = self.image.GetHeight()
+        self.image_info.depth = self.image.GetDepth()
+        self.image_info.necessaryTagsValue = {}
         self.metaData = {}
-        for ith_slice in range(self.img.GetDepth()):
+        for ith_slice in range(self.image.GetDepth()):
             for meta_key in series_reader.GetMetaDataKeys(ith_slice):
-                if meta_key in self.img_info.necessaryTags.keys():
-                    self.img_info.necessaryTagsValue[self.img_info.necessaryTags[meta_key]] = series_reader.GetMetaData(
-                        ith_slice, meta_key
-                    )
+                if meta_key in self.image_info.necessaryTags.keys():
+                    self.image_info.necessaryTagsValue[
+                        self.image_info.necessaryTags[meta_key]
+                    ] = series_reader.GetMetaData(ith_slice, meta_key)
                 self.metaData[meta_key] = series_reader.GetMetaData(ith_slice, meta_key)
-            break # seems first slice is enough
+            break  # seems first slice is enough
 
     def writeSlicesToDicom(self, outputPath: STR_OR_PATH):
         if not outputPath.exists():
@@ -128,9 +128,7 @@ class VolumeImageITK(VolumeImage):
         )
 
     def convertToNiFTI(self, outputPath: STR_OR_PATH):
-        writer = sitk.ImageFileWriter()
-        writer.SetFileName(str(outputPath))
-        writer.Execute(self.image)
+        sitk.WriteImage(self.image, fileName=str(outputPath))
 
     def convertImageType(self, newImageType: sitk.Image) -> sitk.Image:
         return sitk.Cast(self.image, newImageType)

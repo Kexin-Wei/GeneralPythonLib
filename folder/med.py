@@ -123,10 +123,11 @@ class DicomImageFolderMgBase(ABC, MedicalImageFolderMgBase):
     Abstract base class for DICOM image folder management.
     """
 
-    def __init__(self, folderFullPath: STR_OR_PATH):
+    def __init__(self, folderFullPath: STR_OR_PATH, printOut: bool = False):
         super().__init__(folderFullPath)
         self.dicomSeriesFolder: Optional[Sequence[Path]] = None
         self.dicomSeries: Optional[Sequence[VolumeImage]] = None
+        self.printOut = printOut
         self.read_all_dicom_series()
 
     @abstractmethod
@@ -154,8 +155,8 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
 
     """
 
-    def __init__(self, folderFullPath: STR_OR_PATH):
-        super().__init__(folderFullPath)
+    def __init__(self, folderFullPath: STR_OR_PATH, printOut: bool = False):
+        super().__init__(folderFullPath, printOut=printOut)
 
     def read_all_dicom_series(self):
         """Read all dicom series from a folder
@@ -166,28 +167,33 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
         if not self._find_dicom_series_folder():
             return
 
-        print("read all dicom series")
+        if self.printOut:
+            print("read all dicom series")
         self.dicomSeries = []
         for dicomFolder in self.dicomSeriesFolder:
             self.dicomSeries.append(self._read_dicom_series(dicomFolder))
-            print(f"- {dicomFolder.name} read")
+            if self.printOut:
+                print(f"- {dicomFolder.name} read")
 
     def _find_dicom_series_folder(self) -> bool:
         if self.dicomSeriesFolder is not None:
-            print(
-                f"found {len(self.dicomSeriesFolder)} dicom series already, skip this time"
-            )
+            if self.printOut:
+                print(
+                    f"found {len(self.dicomSeriesFolder)} dicom series already, skip this time"
+                )
             return True
 
         self.dicomSeriesFolder = []
         for folder in self.dirs:
             if self._is_a_dicom_series(folder):
-                print(f"- {folder.name} is a dicom series")
+                if self.printOut:
+                    print(f"- {folder.name} is a dicom series")
                 self.dicomSeriesFolder.append(folder)
-            else:
+            elif self.printOut:
                 print(f"- {folder.name} is not a dicom series")
         if len(self.dicomSeriesFolder) == 0:
-            print("No dicom series found")
+            if self.printOut:
+                print("No dicom series found")
             return False
         return True
 
@@ -209,7 +215,7 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
 
     def _is_a_dicom_series(self, folderPath: STR_OR_PATH) -> bool:
         series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folderPath))
-        if not series_IDs:
+        if not series_IDs and self.printOut:
             print(
                 f"ERROR: given directory {folderPath} does not contain a DICOM series."
             )
