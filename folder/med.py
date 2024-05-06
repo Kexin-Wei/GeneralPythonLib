@@ -124,8 +124,7 @@ class DicomImageFolderMgBase(ABC, MedicalImageFolderMgBase):
     """
 
     def __init__(self, folderFullPath: STR_OR_PATH):
-        ABC.__init__(self)
-        MedicalImageFolderMgBase.__init__(self, folderFullPath)
+        super().__init__(folderFullPath)
         self.dicomSeriesFolder: Optional[Sequence[Path]] = None
         self.dicomSeries: Optional[Sequence[VolumeImage]] = None
         self.read_all_dicom_series()
@@ -242,7 +241,7 @@ class DicomImageFolderMg(DicomImageFolderMgBase):
         for d in self.dirs:
             # read in pydicom
             try:
-                dcm_dir = pydicom.filereader.read_dicomdir(d)
+                dcm_dir = pydicom.dcmread(str(d))
             except Exception as e:
                 print(f"Error reading dicom series: {e}")
                 continue
