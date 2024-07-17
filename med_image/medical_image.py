@@ -4,6 +4,7 @@ import SimpleITK as sitk
 from pathlib import Path
 from dataclasses import dataclass
 from ..utils.define_class import STR_OR_PATH
+from abc import ABC, abstractmethod
 
 
 class VolumeImageInfo:
@@ -25,7 +26,6 @@ class VolumeImageInfo:
 
     """
 
-    image: sitk.Image
     dimension: int
     spacing: tuple
     origin: tuple
@@ -33,58 +33,78 @@ class VolumeImageInfo:
     width: int
     height: int
     depth: int
-    pixelIDValue: int
-    pixelIDType: str
-    pixelIDTypeAsString: str
-    necessaryTags: dict
-    necessaryTagsValue: list[str] = [
-        "0010|0010",  # Patient Name
-        "0010|0020",  # Patient ID
-        "0010|0030",  # Patient Birth Date
-        "0020|000D",  # Study Instance UID, for machine consumption
-        "0020|0010",  # Study ID, for human consumption
-        "0008|0008",  # Image Type
-        "0008|0020",  # Study Date
-        "0008|0030",  # Study Time
-        "0008|0050",  # Accession Number
-        "0008|0060",  # Modality
-    ]
-    path: Path
+    necessaryTagsValue: dict
+    necessaryTags: dict = {
+        "0010|0010": "PatientName",
+        "0010|0020": "PatientID",
+        "0010|0030": "PatientBirthDate",
+        "0020|000D": "StudyInstanceUID",
+        "0020|0010": "StudyID",
+        "0008|0008": "ImageType",
+        "0008|0020": "StudyDate",
+        "0008|0030": "StudyTime",
+        "0008|0050": "AccessionNumber",
+        "0008|0060": "Modality",
+        "0008|103e": "SeriesDescription",
+    }
 
 
-@dataclass(init=False)
 class VolumeImage(VolumeImageInfo):
-    def __init__(self, image: sitk.Image, path: STR_OR_PATH) -> None:
+
+    def __init__(self) -> None:
         super().__init__()
-        self.image = image
-        self.dimension = image.GetDimension()
-        self.spacing = image.GetSpacing()
-        self.origin = image.GetOrigin()
-        self.direction = image.GetDirection()
-        self.width = image.GetWidth()
-        self.height = image.GetHeight()
-        self.depth = image.GetDepth()
-        self.pixelIDValue = image.GetPixelIDValue()
-        self.pixelIDType = image.GetPixelIDType()
-        self.pixelIDTypeAsString = image.GetPixelIDTypeAsString()
-        for k in self.necessaryTagsValue:
-            self.necessaryTags[k] = image.GetMetaData(k)
-        self.path = Path(path)
+        self.image = None
+        self.path = None
+        self.image_info = VolumeImageInfo()
 
     def printOut(self):
-        print(f"Image Dimension: {self.dimension}")
-        print(f"Image Spacing: {self.spacing}")
-        print(f"Image Origin: {self.origin}")
-        print(f"Image Direction: {self.direction}")
-        print(f"Image Width: {self.width}")
-        print(f"Image Height: {self.height}")
-        print(f"Image Depth: {self.depth}")
-        print(f"Image PixelIDValue: {self.pixelIDValue}")
-        print(f"Image PixelIDType: {self.pixelIDType}")
-        print(f"Image PixelIDTypeAsString: {self.pixelIDTypeAsString}")
-        for k in self.necessaryTagsValue:
-            print(f"Image Necessary Tags {k}: {self.necessaryTags[k]}")
         print(f"Image Path: {self.path}")
+        print(f"Image Dimension: {self.image_info.dimension}")
+        print(f"Image Spacing: {self.image_info.spacing}")
+        print(f"Image Origin: {self.image_info.origin}")
+        print(f"Image Direction: {self.image_info.direction}")
+        print(f"Image Width: {self.image_info.width}")
+        print(f"Image Height: {self.image_info.height}")
+        print(f"Image Depth: {self.image_info.depth}")
+        for k in self.image_info.necessaryTagsValue.keys():
+            print(f"Image Necessary Tags {k}: {self.image_info.necessaryTagsValue[k]}")
+
+
+class VolumeImageITK(VolumeImage):
+    def __init__(self) -> None:
+        super().__init__()
+        self.series_file_name = None
+        self.series_IDs = None
+        self.metaData = None
+
+    def read(self, folder_path: STR_OR_PATH):
+        series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folder_path))
+        series_file_name = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(
+            str(folder_path), series_IDs[0]
+        )
+        series_reader = sitk.ImageSeriesReader()
+        series_reader.SetFileNames(series_file_name)
+        series_reader.MetaDataDictionaryArrayUpdateOn()
+        series_reader.LoadPrivateTagsOn()
+        self.image = series_reader.Execute()
+        self.path = folder_path
+        self.image_info.dimension = self.image.GetDimension()
+        self.image_info.spacing = self.image.GetSpacing()
+        self.image_info.origin = self.image.GetOrigin()
+        self.image_info.direction = self.image.GetDirection()
+        self.image_info.width = self.image.GetWidth()
+        self.image_info.height = self.image.GetHeight()
+        self.image_info.depth = self.image.GetDepth()
+        self.image_info.necessaryTagsValue = {}
+        self.metaData = {}
+        for ith_slice in range(self.image.GetDepth()):
+            for meta_key in series_reader.GetMetaDataKeys(ith_slice):
+                if meta_key in self.image_info.necessaryTags.keys():
+                    self.image_info.necessaryTagsValue[
+                        self.image_info.necessaryTags[meta_key]
+                    ] = series_reader.GetMetaData(ith_slice, meta_key)
+                self.metaData[meta_key] = series_reader.GetMetaData(ith_slice, meta_key)
+            break  # seems first slice is enough
 
     def writeSlicesToDicom(self, outputPath: STR_OR_PATH):
         if not outputPath.exists():
@@ -106,6 +126,9 @@ class VolumeImage(VolumeImageInfo):
             sitk.Cast(sitk.RescaleIntensity(self.image), pngFormat),
             [outputPath.joinpath(f"slice{i}.png") for i in range(self.depth)],
         )
+
+    def convertToNiFTI(self, outputPath: STR_OR_PATH):
+        sitk.WriteImage(self.image, fileName=str(outputPath))
 
     def convertImageType(self, newImageType: sitk.Image) -> sitk.Image:
         return sitk.Cast(self.image, newImageType)
