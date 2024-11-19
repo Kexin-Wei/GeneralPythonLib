@@ -226,7 +226,7 @@ class URDFFolderMg(FolderMg):
     def get_URDF(dirPath):
         urdfs = []
         dirMg = FolderMg(dirPath)
-        if dirMg.nFile:
+        if dirMg.n_file:
             for f in dirMg.files:
                 if "urdf" in f.suffix.lower():
                     urdfs.append(f)

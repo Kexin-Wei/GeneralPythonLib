@@ -7,7 +7,7 @@ import pydicom
 import pydicom.filereader
 
 from .basic import FolderMg
-from ..med_image.medical_image import VolumeImage, VolumeImageITK
+from ..med_image.medical_image import VolumeImage, DicomeSeriesITK
 from ..utils.define_class import STR_OR_PATH
 from abc import ABC, abstractmethod
 
@@ -136,7 +136,7 @@ class DicomImageFolderMgBase(ABC, MedicalImageFolderMgBase):
         Read all DICOM series from a folder.
 
         Returns:
-            Sequence[VolumeImageITK]: A list of DICOM series.
+            Sequence[DicomeSeriesITK]: A list of DICOM series.
         """
         pass
 
@@ -197,7 +197,7 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
             return False
         return True
 
-    def _read_dicom_series(self, folder_path: STR_OR_PATH) -> VolumeImageITK:
+    def _read_dicom_series(self, folder_path: STR_OR_PATH) -> DicomeSeriesITK:
         """Read dicom series from a folder
 
         Args:
@@ -209,7 +209,7 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
         if not self._is_a_dicom_series(folder_path):
             return []
 
-        volumeImg = VolumeImageITK()
+        volumeImg = DicomeSeriesITK()
         volumeImg.read(folder_path)
         return volumeImg
 

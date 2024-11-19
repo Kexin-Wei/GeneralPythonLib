@@ -70,7 +70,7 @@ class VolumeImage(VolumeImageInfo):
             print(f"Image Necessary Tags {k}: {self.image_info.necessaryTagsValue[k]}")
 
 
-class VolumeImageITK(VolumeImage):
+class DicomeSeriesITK(VolumeImage):
     def __init__(self) -> None:
         super().__init__()
         self.series_file_name = None
