@@ -13,7 +13,7 @@ def test_read_global(shared_datadir):
 
 
 def test_read_dicom(shared_datadir):
-    from lib.folder.med import DicomImageFolderMg
+    from lib.folder.med import DicomImageFolderMgPy
     from lib.folder.basic import FolderMg
     import pydicom
 

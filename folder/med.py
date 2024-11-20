@@ -7,12 +7,12 @@ import pydicom
 import pydicom.filereader
 
 from .basic import FolderMg
-from ..med_image.medical_image import VolumeImage, DicomeSeriesITK
+from ..med_image.medical_image import VolumeImageBasic, DicomeSeriesITK
 from ..utils.define_class import STR_OR_PATH
 from abc import ABC, abstractmethod
 
 
-class MedicalImageFolderMgBase(FolderMg):
+class MedicalImageFolderMg(FolderMg):
     """
     return images path given different image formats, currently supported
         - Meta Image: *.mha, *.mhd
@@ -41,7 +41,7 @@ class MedicalImageFolderMgBase(FolderMg):
 FOLDERMG_OR_PATH_OR_STR = Union[FolderMg, Path, str]
 
 
-class MedicalFolderMg(FolderMg):
+class MRIMedicalFolderMg(FolderMg):
     """
     Find certain file in a net-structure folder, which has multiple folders that contain their own folders inside them
     """
@@ -93,7 +93,7 @@ class MedicalFolderMg(FolderMg):
             for d in self.dirs:
                 # print("\n--------------------------------------------")
                 # print(f"In folder {d}")
-                cMg = MedicalFolderMg(d)
+                cMg = MRIMedicalFolderMg(d)
                 cMg.get_T2()
                 self.t2List.extend(cMg.t2List)
 
@@ -103,7 +103,7 @@ class MedicalFolderMg(FolderMg):
             for d in self.dirs:
                 # print("\n--------------------------------------------")
                 # print(f"In folder {d}")
-                cMg = MedicalFolderMg(d)
+                cMg = MRIMedicalFolderMg(d)
                 cMg.get_DWI()
                 self.dwiList.extend(cMg.dwiList)
 
@@ -113,12 +113,12 @@ class MedicalFolderMg(FolderMg):
             for d in self.dirs:
                 # print("\n--------------------------------------------")
                 # print(f"In folder {d}")
-                cMg = MedicalFolderMg(d)
+                cMg = MRIMedicalFolderMg(d)
                 cMg.get_ADC()
                 self.adcList.extend(cMg.adcList)
 
 
-class DicomImageFolderMgBase(ABC, MedicalImageFolderMgBase):
+class DicomImageFolderMgBase(ABC, MedicalImageFolderMg):
     """
     Abstract base class for DICOM image folder management.
     """
@@ -126,7 +126,7 @@ class DicomImageFolderMgBase(ABC, MedicalImageFolderMgBase):
     def __init__(self, folderFullPath: STR_OR_PATH, printOut: bool = False):
         super().__init__(folderFullPath)
         self.dicomSeriesFolder: Optional[Sequence[Path]] = None
-        self.dicomSeries: Optional[Sequence[VolumeImage]] = None
+        self.dicomSeries: Optional[Sequence[VolumeImageBasic]] = None
         self.printOut = printOut
         self.read_all_dicom_series()
 
@@ -140,7 +140,7 @@ class DicomImageFolderMgBase(ABC, MedicalImageFolderMgBase):
         """
         pass
 
-    def get_all_dicom_series(self) -> Sequence[VolumeImage]:
+    def get_all_dicom_series(self) -> Sequence[VolumeImageBasic]:
         return self.dicomSeries
 
 
@@ -223,7 +223,7 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
         return True
 
 
-class DicomImageFolderMg(DicomImageFolderMgBase):
+class DicomImageFolderMgPy(DicomImageFolderMgBase):
     """
     Similar like DiacomImageFolderMgITK, but use pydicom to read dicom files
     """

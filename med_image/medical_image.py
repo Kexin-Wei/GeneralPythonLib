@@ -48,8 +48,22 @@ class VolumeImageInfo:
         "0008|103e": "SeriesDescription",
     }
 
+    def __eq__(self, value):
+        """
+        ignore the necessaryTagsValue in comparing
+        """
+        return (
+            self.dimension == value.dimension
+            and np.allclose(self.spacing, value.spacing, atol=1e-3)
+            and np.allclose(self.origin, value.origin, atol=1e-3)
+            and np.allclose(self.direction, value.direction, atol=1e-3)
+            and self.width == value.width
+            and self.height == value.height
+            and self.depth == value.depth
+        )
 
-class VolumeImage(VolumeImageInfo):
+
+class VolumeImageBasic(VolumeImageInfo):
 
     def __init__(self) -> None:
         super().__init__()
@@ -69,8 +83,41 @@ class VolumeImage(VolumeImageInfo):
         for k in self.image_info.necessaryTagsValue.keys():
             print(f"Image Necessary Tags {k}: {self.image_info.necessaryTagsValue[k]}")
 
+    def _readMetaData(self, image, info=None):
+        if info is None:
+            info = VolumeImageInfo()
+        info.necessaryTagsValue = {}
+        for meta_key in image.GetMetaDataKeys():
+            if meta_key in info.necessaryTags:
+                info.necessaryTagsValue[meta_key] = image.GetMetaData(meta_key)
+        return info
 
-class DicomeSeriesITK(VolumeImage):
+    def _getImageInfo(self, image, info=None):
+        if info is None:
+            info = VolumeImageInfo()
+        info.dimension = image.GetDimension()
+        info.spacing = image.GetSpacing()
+        info.origin = image.GetOrigin()
+        info.direction = image.GetDirection()
+        info.width = image.GetWidth()
+        info.height = image.GetHeight()
+        info.depth = image.GetDepth()
+        return info
+
+
+class VolumeImage(VolumeImageBasic):
+    def __init__(self, file_path: STR_OR_PATH):
+        super().__init__()
+        self.readFile(file_path)
+
+    def readFile(self, file_path: STR_OR_PATH):
+        self.image = sitk.ReadImage(file_path)
+        self.path = file_path
+        self.image_info = self._getImageInfo(self.image)
+        self.image_info = self._readMetaData(self.image, self.image_info)
+
+
+class DicomeSeriesITK(VolumeImageBasic):
     def __init__(self) -> None:
         super().__init__()
         self.series_file_name = None
@@ -88,13 +135,9 @@ class DicomeSeriesITK(VolumeImage):
         series_reader.LoadPrivateTagsOn()
         self.image = series_reader.Execute()
         self.path = folder_path
-        self.image_info.dimension = self.image.GetDimension()
-        self.image_info.spacing = self.image.GetSpacing()
-        self.image_info.origin = self.image.GetOrigin()
-        self.image_info.direction = self.image.GetDirection()
-        self.image_info.width = self.image.GetWidth()
-        self.image_info.height = self.image.GetHeight()
-        self.image_info.depth = self.image.GetDepth()
+
+        # get data info
+        self.image_info = self._getImageInfo(self.image)
         self.image_info.necessaryTagsValue = {}
         self.metaData = {}
         for ith_slice in range(self.image.GetDepth()):
