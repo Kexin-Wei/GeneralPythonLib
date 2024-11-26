@@ -123,15 +123,84 @@ class DicomImageFolderMgBase(ABC, MedicalImageFolderMg):
     Abstract base class for DICOM image folder management.
     """
 
-    def __init__(self, folderFullPath: STR_OR_PATH, printOut: bool = False):
+    def __init__(
+        self,
+        folderFullPath: STR_OR_PATH,
+        deepSearch: bool = False,
+        printOut: bool = False,
+    ):
         super().__init__(folderFullPath)
         self.dicomSeriesFolder: Optional[Sequence[Path]] = None
         self.dicomSeries: Optional[Sequence[VolumeImageBasic]] = None
         self.printOut = printOut
+        self.deepSearch = deepSearch
         self.read_all_dicom_series()
 
-    @abstractmethod
     def read_all_dicom_series(self):
+        """Read all dicom series from a folder
+
+        Returns:
+            Sequence[VolumeImage]: a list of dicom series
+        """
+        if not self._find_dicom_series_folder():
+            return
+
+        if self.printOut:
+            print("read all dicom series")
+        self.dicomSeries = []
+        for dicomFolder in self.dicomSeriesFolder:
+            self.dicomSeries.append(self._read_dicom_series(dicomFolder))
+            if self.printOut:
+                print(f"- {dicomFolder.name} read")
+
+    def _find_deepest_folder_with_only_files(self, folder: STR_OR_PATH) -> list:
+        """
+        Current suspect the dicom folder should only have files rather than subfolders
+        """
+        c_mg = FolderMg(folder)
+        if c_mg.nDir == 0:
+            if c_mg.nFile > 0:
+                return [folder]
+            else:
+                return []
+
+        list_of_dicom_subfolders = []
+        for d in c_mg.dirs:
+            subfolder_paths = self._find_deepest_folder_with_only_files(d)
+            list_of_dicom_subfolders.extend(subfolder_paths)
+        return list_of_dicom_subfolders
+
+    def _find_dicom_series_folder(self) -> bool:
+        if self.dicomSeriesFolder is not None:
+            if self.printOut:
+                print(
+                    f"found {len(self.dicomSeriesFolder)} dicom series already, skip this time"
+                )
+            return True
+
+        self.dicomSeriesFolder = []
+        for folder in self.dirs:
+            if self.deepSearch:
+                subfolders = self._find_deepest_folder_with_only_files(folder)
+                for sf in subfolders:
+                    if self._is_a_dicom_series(sf):
+                        if self.printOut:
+                            print(f"- {sf.name} is a dicom series")
+                        self.dicomSeriesFolder.append(sf)
+            else:
+                if self._is_a_dicom_series(folder):
+                    if self.printOut:
+                        print(f"- {folder.name} is a dicom series")
+                    self.dicomSeriesFolder.append(folder)
+
+        if len(self.dicomSeriesFolder) == 0:
+            if self.printOut:
+                print("No dicom series found")
+            return False
+        return True
+
+    @abstractmethod
+    def _read_dicom_series(self):
         """
         Read all DICOM series from a folder.
 
@@ -155,47 +224,13 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
 
     """
 
-    def __init__(self, folderFullPath: STR_OR_PATH, printOut: bool = False):
-        super().__init__(folderFullPath, printOut=printOut)
-
-    def read_all_dicom_series(self):
-        """Read all dicom series from a folder
-
-        Returns:
-            Sequence[VolumeImage]: a list of dicom series
-        """
-        if not self._find_dicom_series_folder():
-            return
-
-        if self.printOut:
-            print("read all dicom series")
-        self.dicomSeries = []
-        for dicomFolder in self.dicomSeriesFolder:
-            self.dicomSeries.append(self._read_dicom_series(dicomFolder))
-            if self.printOut:
-                print(f"- {dicomFolder.name} read")
-
-    def _find_dicom_series_folder(self) -> bool:
-        if self.dicomSeriesFolder is not None:
-            if self.printOut:
-                print(
-                    f"found {len(self.dicomSeriesFolder)} dicom series already, skip this time"
-                )
-            return True
-
-        self.dicomSeriesFolder = []
-        for folder in self.dirs:
-            if self._is_a_dicom_series(folder):
-                if self.printOut:
-                    print(f"- {folder.name} is a dicom series")
-                self.dicomSeriesFolder.append(folder)
-            elif self.printOut:
-                print(f"- {folder.name} is not a dicom series")
-        if len(self.dicomSeriesFolder) == 0:
-            if self.printOut:
-                print("No dicom series found")
-            return False
-        return True
+    def __init__(
+        self,
+        folderFullPath: STR_OR_PATH,
+        deepSearch: bool = False,
+        printOut: bool = False,
+    ):
+        super().__init__(folderFullPath, deepSearch=deepSearch, printOut=printOut)
 
     def _read_dicom_series(self, folder_path: STR_OR_PATH) -> DicomeSeriesITK:
         """Read dicom series from a folder
@@ -209,16 +244,11 @@ class DicomImageFolderMgITK(DicomImageFolderMgBase):
         if not self._is_a_dicom_series(folder_path):
             return []
 
-        volumeImg = DicomeSeriesITK()
-        volumeImg.read(folder_path)
-        return volumeImg
+        return DicomeSeriesITK(folder_path=folder_path)
 
     def _is_a_dicom_series(self, folderPath: STR_OR_PATH) -> bool:
         series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folderPath))
         if not series_IDs and self.printOut:
-            print(
-                f"ERROR: given directory {folderPath} does not contain a DICOM series."
-            )
             return False
         return True
 

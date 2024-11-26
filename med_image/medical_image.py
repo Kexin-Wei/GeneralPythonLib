@@ -118,23 +118,24 @@ class VolumeImage(VolumeImageBasic):
 
 
 class DicomeSeriesITK(VolumeImageBasic):
-    def __init__(self) -> None:
+    def __init__(self, folder_path: STR_OR_PATH):
         super().__init__()
         self.series_file_name = None
         self.series_IDs = None
         self.metaData = None
+        self.path = folder_path
+        self._read()
 
-    def read(self, folder_path: STR_OR_PATH):
-        series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(folder_path))
+    def _read(self):
+        series_IDs = sitk.ImageSeriesReader.GetGDCMSeriesIDs(str(self.path))
         series_file_name = sitk.ImageSeriesReader.GetGDCMSeriesFileNames(
-            str(folder_path), series_IDs[0]
+            str(self.path), series_IDs[0]
         )
         series_reader = sitk.ImageSeriesReader()
         series_reader.SetFileNames(series_file_name)
         series_reader.MetaDataDictionaryArrayUpdateOn()
         series_reader.LoadPrivateTagsOn()
         self.image = series_reader.Execute()
-        self.path = folder_path
 
         # get data info
         self.image_info = self._getImageInfo(self.image)
