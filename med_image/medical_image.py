@@ -104,6 +104,12 @@ class VolumeImageBasic(VolumeImageInfo):
         info.depth = image.GetDepth()
         return info
 
+    def convertToNiFTI(self, outputPath: STR_OR_PATH):
+        sitk.WriteImage(self.image, fileName=str(outputPath))
+
+    def convertImageType(self, newImageType: sitk.Image) -> sitk.Image:
+        return sitk.Cast(self.image, newImageType)
+
 
 class VolumeImage(VolumeImageBasic):
     def __init__(self, file_path: STR_OR_PATH):
@@ -170,12 +176,6 @@ class DicomeSeriesITK(VolumeImageBasic):
             sitk.Cast(sitk.RescaleIntensity(self.image), pngFormat),
             [outputPath.joinpath(f"slice{i}.png") for i in range(self.depth)],
         )
-
-    def convertToNiFTI(self, outputPath: STR_OR_PATH):
-        sitk.WriteImage(self.image, fileName=str(outputPath))
-
-    def convertImageType(self, newImageType: sitk.Image) -> sitk.Image:
-        return sitk.Cast(self.image, newImageType)
 
     def changeToUInt16(self, rescale: int = None) -> sitk.Image:
         newImageArray = sitk.GetArrayFromImage(self.image).astype(np.int64)
